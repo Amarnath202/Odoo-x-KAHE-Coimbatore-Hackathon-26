@@ -48,6 +48,22 @@ export class ProductsRepository {
     return { data, total };
   }
 
+  async findForExport(companyId?: string) {
+    return prisma.product.findMany({
+      where: {
+        deletedAt: null,
+        ...(companyId && { companyId }),
+      },
+      include: {
+        ...PRODUCT_INCLUDE,
+        inventory: {
+          select: { onHandQty: true },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   async findById(id: string) {
     return prisma.product.findFirst({
       where: { id, deletedAt: null },

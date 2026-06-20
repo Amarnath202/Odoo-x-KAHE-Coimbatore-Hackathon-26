@@ -68,6 +68,27 @@ export class PurchaseRepository {
     return { data, total };
   }
 
+  async findForExport(companyId?: string, month?: number, year?: number) {
+    const where: Prisma.PurchaseOrderWhereInput = {
+      ...(companyId && { companyId }),
+    };
+
+    if (year) {
+      const startDate = new Date(year, (month || 1) - 1, 1);
+      const endDate = month ? new Date(year, month, 1) : new Date(year + 1, 0, 1);
+      where.createdAt = {
+        gte: startDate,
+        lt: endDate,
+      };
+    }
+
+    return prisma.purchaseOrder.findMany({
+      where,
+      include: PO_INCLUDE,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findOrderById(id: string, tx?: Prisma.TransactionClient) {
     const client = tx || prisma;
     return client.purchaseOrder.findUnique({ where: { id }, include: PO_INCLUDE });

@@ -50,6 +50,8 @@ router.use(authenticate);
  */
 router.get('/', validate(productQuerySchema, 'query'), asyncHandler(productsController.list.bind(productsController)));
 
+router.get('/export', authorize(Role.ADMIN, Role.BUSINESS_OWNER), asyncHandler(productsController.exportExcel.bind(productsController)));
+
 /**
  * @swagger
  * /products/{id}:

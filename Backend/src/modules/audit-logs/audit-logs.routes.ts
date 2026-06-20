@@ -50,4 +50,10 @@ router.get(
   asyncHandler(auditLogsController.list.bind(auditLogsController)),
 );
 
+router.get(
+  '/export',
+  authorize(Role.ADMIN, Role.BUSINESS_OWNER),
+  asyncHandler(auditLogsController.exportExcel.bind(auditLogsController)),
+);
+
 export default router;

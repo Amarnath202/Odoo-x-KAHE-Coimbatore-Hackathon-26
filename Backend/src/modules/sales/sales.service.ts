@@ -44,6 +44,10 @@ export class SalesService {
     return salesRepository.findOrders(query);
   }
 
+  async getExportData(companyId?: string, month?: number, year?: number) {
+    return salesRepository.findForExport(companyId, month, year);
+  }
+
   async getOrderById(id: string) {
     const order = await salesRepository.findOrderById(id);
     if (!order) throw AppError.notFound(MESSAGES.SALES.ORDER_NOT_FOUND);

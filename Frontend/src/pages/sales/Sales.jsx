@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingCart, Plus, Search, Eye, Trash2,
-  TrendingUp, Clock, CheckCircle, XCircle, Package,
+  TrendingUp, Clock, CheckCircle, XCircle, Package, Download,
 } from 'lucide-react';
 import { PageWrapper, EmptyState, formatINR, formatDate } from '../../components/UI';
 import StatusBadge from '../../components/StatusBadge';
@@ -38,6 +38,9 @@ export default function Sales() {
   const [deleteId, setDeleteId] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exportMonth, setExportMonth] = useState('');
+  const [exportYear, setExportYear] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -81,15 +84,62 @@ export default function Sales() {
   return (
     <PageWrapper>
       {/* Page Header */}
-      <div className="page-header">
+      <div className="page-header flex flex-wrap gap-4 items-center justify-between">
         <div>
           <h1 className="page-title">Sales Orders</h1>
           <p className="page-subtitle">{orders.length} orders · {formatINR(kpi.totalValue)} total value</p>
         </div>
-        <Link to="/sales/create" className="btn-primary">
-          <Plus className="w-4 h-4" />
-          Create Sales Order
-        </Link>
+        <div className="flex flex-wrap gap-3 items-center">
+          {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+            <>
+              <select 
+                value={exportMonth} 
+                onChange={e => setExportMonth(e.target.value)}
+                className="input !py-1.5 !text-sm w-32"
+              >
+                <option value="">All Months</option>
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
+                ))}
+              </select>
+              <select 
+                value={exportYear} 
+                onChange={e => setExportYear(e.target.value)}
+                className="input !py-1.5 !text-sm w-28"
+              >
+                <option value="">All Years</option>
+                {[2024, 2025, 2026, 2027].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <button 
+                onClick={async () => {
+                  try {
+                    setExporting(true);
+                    await salesApi.export({ 
+                      month: exportMonth || undefined, 
+                      year: exportYear || undefined 
+                    });
+                    toast('Export downloaded successfully', 'success');
+                  } catch (err) {
+                    toast('Export failed', 'error');
+                  } finally {
+                    setExporting(false);
+                  }
+                }}
+                disabled={exporting}
+                className="btn-secondary whitespace-nowrap"
+              >
+                <Download className="w-4 h-4" />
+                {exporting ? 'Exporting...' : 'Export Excel'}
+              </button>
+            </>
+          )}
+          <Link to="/sales/create" className="btn-primary whitespace-nowrap">
+            <Plus className="w-4 h-4" />
+            Create Order
+          </Link>
+        </div>
       </div>
 
       {/* KPI Row */}

@@ -93,6 +93,7 @@ router.delete('/customers/:id', authorize(Role.ADMIN, Role.BUSINESS_OWNER), vali
  *         description: Paginated sales order list
  */
 router.get('/sales-orders', authorize(...salesRoles), validate(salesOrderQuerySchema, 'query'), asyncHandler(salesController.listOrders.bind(salesController)));
+router.get('/sales-orders/export', authorize(Role.ADMIN, Role.BUSINESS_OWNER), asyncHandler(salesController.exportExcel.bind(salesController)));
 router.get('/sales-orders/:id', authorize(...salesRoles), validate(idParamSchema, 'params'), asyncHandler(salesController.getOrderById.bind(salesController)));
 
 /**

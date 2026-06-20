@@ -61,6 +61,7 @@ router.delete('/vendors/:id', authorize(Role.ADMIN, Role.BUSINESS_OWNER), valida
  *         description: Paginated purchase order list
  */
 router.get('/purchase-orders', authorize(...purchaseRoles), validate(purchaseOrderQuerySchema, 'query'), asyncHandler(purchaseController.listOrders.bind(purchaseController)));
+router.get('/purchase-orders/export', authorize(Role.ADMIN, Role.BUSINESS_OWNER), asyncHandler(purchaseController.exportExcel.bind(purchaseController)));
 router.get('/purchase-orders/:id', authorize(...purchaseRoles), validate(idParamSchema, 'params'), asyncHandler(purchaseController.getOrderById.bind(purchaseController)));
 
 /**

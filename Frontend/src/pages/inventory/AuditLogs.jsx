@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, SlidersHorizontal, Activity, FileText } from 'lucide-react';
+import { Search, SlidersHorizontal, Activity, FileText, Download } from 'lucide-react';
 import { PageWrapper, EmptyState, formatDateTime } from '../../components/UI';
 import { auditLogsApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function AuditLogs() {
   const { user } = useAuth();
@@ -11,6 +12,10 @@ export default function AuditLogs() {
   const [search, setSearch] = useState('');
   const [moduleFilter, setModuleFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const [exportMonth, setExportMonth] = useState('');
+  const [exportYear, setExportYear] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const toast = useToast();
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -37,10 +42,57 @@ export default function AuditLogs() {
 
   return (
     <PageWrapper>
-      <div className="page-header">
+      <div className="page-header flex flex-wrap gap-4 items-center justify-between">
         <div>
           <h1 className="page-title">Audit Logs</h1>
           <p className="page-subtitle">Complete history of system actions and changes.</p>
+        </div>
+        <div className="flex flex-wrap gap-3 items-center">
+          {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+            <>
+              <select 
+                value={exportMonth} 
+                onChange={e => setExportMonth(e.target.value)}
+                className="input !py-1.5 !text-sm w-32"
+              >
+                <option value="">All Months</option>
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
+                ))}
+              </select>
+              <select 
+                value={exportYear} 
+                onChange={e => setExportYear(e.target.value)}
+                className="input !py-1.5 !text-sm w-28"
+              >
+                <option value="">All Years</option>
+                {[2024, 2025, 2026, 2027].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <button 
+                onClick={async () => {
+                  try {
+                    setExporting(true);
+                    await auditLogsApi.export({ 
+                      month: exportMonth || undefined, 
+                      year: exportYear || undefined 
+                    });
+                    toast('Export downloaded successfully', 'success');
+                  } catch (err) {
+                    toast('Export failed', 'error');
+                  } finally {
+                    setExporting(false);
+                  }
+                }}
+                disabled={exporting}
+                className="btn-secondary whitespace-nowrap"
+              >
+                <Download className="w-4 h-4" />
+                {exporting ? 'Exporting...' : 'Export Excel'}
+              </button>
+            </>
+          )}
         </div>
       </div>
 

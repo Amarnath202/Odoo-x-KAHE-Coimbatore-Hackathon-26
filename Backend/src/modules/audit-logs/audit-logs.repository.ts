@@ -35,6 +35,29 @@ export class AuditLogsRepository {
 
     return { data, total };
   }
+
+  async findForExport(companyId?: string, month?: number, year?: number) {
+    const where: Prisma.AuditLogWhereInput = {
+      ...(companyId && { companyId }),
+    };
+
+    if (year) {
+      const startDate = new Date(year, (month || 1) - 1, 1);
+      const endDate = month ? new Date(year, month, 1) : new Date(year + 1, 0, 1);
+      where.timestamp = {
+        gte: startDate,
+        lt: endDate,
+      };
+    }
+
+    return prisma.auditLog.findMany({
+      where,
+      include: {
+        user: { select: { id: true, name: true, role: true } },
+      },
+      orderBy: { timestamp: 'desc' },
+    });
+  }
 }
 
 export const auditLogsRepository = new AuditLogsRepository();

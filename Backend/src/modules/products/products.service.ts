@@ -8,6 +8,10 @@ export class ProductsService {
     return productsRepository.findMany(query);
   }
 
+  async getExportData(companyId?: string) {
+    return productsRepository.findForExport(companyId);
+  }
+
   async getById(id: string) {
     const product = await productsRepository.findById(id);
     if (!product) throw AppError.notFound(MESSAGES.PRODUCTS.NOT_FOUND);

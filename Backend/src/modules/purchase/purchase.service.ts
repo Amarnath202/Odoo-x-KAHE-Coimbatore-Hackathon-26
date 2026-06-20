@@ -41,6 +41,10 @@ export class PurchaseService {
     return purchaseRepository.findOrders(query);
   }
 
+  async getExportData(companyId?: string, month?: number, year?: number) {
+    return purchaseRepository.findForExport(companyId, month, year);
+  }
+
   async getOrderById(id: string) {
     const order = await purchaseRepository.findOrderById(id);
     if (!order) throw AppError.notFound(MESSAGES.PURCHASE.ORDER_NOT_FOUND);

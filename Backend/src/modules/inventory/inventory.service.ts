@@ -74,6 +74,10 @@ export class InventoryService {
     });
   }
 
+  async getExportData(companyId?: string) {
+    return inventoryRepository.findForExport(companyId);
+  }
+
   /**
    * Get inventory for a specific product in a warehouse
    */
