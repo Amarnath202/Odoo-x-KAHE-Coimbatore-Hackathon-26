@@ -80,6 +80,13 @@ export default function ProductCreate() {
     if (!formData.name.trim()) { toast('Product Name is required', 'error'); return; }
     if (!formData.sku.trim() && !isEdit) { toast('SKU is required', 'error'); return; }
 
+    if (formData.procureOnDemand) {
+      if (formData.procurementType === 'MANUFACTURING' && !formData.bomId) {
+        toast('Bill of Materials is required for Manufacturing products.', 'error');
+        return;
+      }
+    }
+
     const body = {
       companyId: formData.companyId || user?.companyId,
       name: formData.name.trim(),
@@ -87,12 +94,17 @@ export default function ProductCreate() {
       salesPrice: parseFloat(formData.salesPrice) || 0,
       costPrice: parseFloat(formData.costPrice) || 0,
       procureOnDemand: formData.procureOnDemand,
-      procurementType: formData.procurementType,
       ...(formData.vendorId ? { vendorId: formData.vendorId } : {}),
-      ...(formData.bomId ? { bomId: formData.bomId } : {}),
       ...(formData.unitId ? { unitId: formData.unitId } : {}),
       ...(formData.categoryId ? { categoryId: formData.categoryId } : {}),
     };
+
+    if (formData.procureOnDemand) {
+      body.procurementType = formData.procurementType;
+      if (formData.procurementType === 'MANUFACTURING') {
+        body.bomId = formData.bomId;
+      }
+    }
 
     setLoading(true);
     try {
@@ -166,33 +178,36 @@ export default function ProductCreate() {
                 value={formData.costPrice} onChange={e => setFormData({ ...formData, costPrice: e.target.value })} required />
             </div>
 
-            {/* Procurement Type */}
-            <div className="form-group">
-              <label className="label">Procurement Type</label>
-              <select className="select" value={formData.procurementType}
-                onChange={e => setFormData({ ...formData, procurementType: e.target.value })}>
-                <option value="MANUFACTURING">Manufacturing</option>
-                <option value="PURCHASE">Purchase</option>
-              </select>
-            </div>
-
             {/* Procure on demand */}
-            <div className="form-group flex items-center gap-3 mt-6">
+            <div className="form-group flex items-center gap-3 md:col-span-2">
               <input type="checkbox" id="pod" checked={formData.procureOnDemand}
                 onChange={e => setFormData({ ...formData, procureOnDemand: e.target.checked })}
                 className="w-4 h-4 accent-primary" />
               <label htmlFor="pod" className="label mb-0 cursor-pointer">Procure on Demand (MTO)</label>
             </div>
 
-            {/* Bill of Materials */}
-            {formData.procurementType === 'MANUFACTURING' && (
-              <div className="form-group md:col-span-2">
-                <label className="label">Bill of Materials</label>
-                <select className="select" value={formData.bomId} onChange={e => setFormData({ ...formData, bomId: e.target.value })}>
-                  <option value="">No associated BoM</option>
-                  {boms.map(bom => <option key={bom.id} value={bom.id}>{bom.name}</option>)}
-                </select>
-              </div>
+            {/* Procurement Fields (Conditionally Shown) */}
+            {formData.procureOnDemand && (
+              <>
+                <div className="form-group">
+                  <label className="label">Procurement Type *</label>
+                  <select className="select" value={formData.procurementType}
+                    onChange={e => setFormData({ ...formData, procurementType: e.target.value })}>
+                    <option value="MANUFACTURING">Manufacturing</option>
+                    <option value="PURCHASE">Purchase</option>
+                  </select>
+                </div>
+
+                {formData.procurementType === 'MANUFACTURING' && (
+                  <div className="form-group">
+                    <label className="label">Bill of Materials *</label>
+                    <select className="select" value={formData.bomId} onChange={e => setFormData({ ...formData, bomId: e.target.value })}>
+                      <option value="">— Select BoM —</option>
+                      {boms.map(bom => <option key={bom.id} value={bom.id}>{bom.name}</option>)}
+                    </select>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

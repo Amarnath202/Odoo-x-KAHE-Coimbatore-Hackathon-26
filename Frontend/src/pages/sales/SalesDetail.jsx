@@ -74,9 +74,12 @@ export default function SalesDetail() {
   };
 
   const handleCancel = async () => {
+    if (['CONFIRMED', 'PARTIALLY_DELIVERED'].includes(order?.status) && !warehouseId) {
+      toast('Please select a warehouse', 'error'); return;
+    }
     setActionLoading(true);
     try {
-      await salesApi.cancel(id);
+      await salesApi.cancel(id, { warehouseId });
       toast('Order cancelled', 'warning');
       setCancelModal(false);
       fetchOrder();
@@ -88,9 +91,26 @@ export default function SalesDetail() {
   };
 
   const handleDeliver = async () => {
+    if (!warehouseId) { toast('Please select a warehouse', 'error'); return; }
     setActionLoading(true);
     try {
-      await salesApi.deliver(id, {});
+      const remainingItems = (order.items ?? order.lines ?? [])
+        .filter(item => (item.quantity ?? item.qty) - (item.deliveredQty || 0) > 0)
+        .map(item => ({
+          salesOrderItemId: item.id,
+          deliveredQty: (item.quantity ?? item.qty) - (item.deliveredQty || 0)
+        }));
+
+      if (remainingItems.length === 0) {
+        toast('No items left to deliver', 'error');
+        setActionLoading(false);
+        return;
+      }
+
+      await salesApi.deliver(id, {
+        warehouseId,
+        items: remainingItems
+      });
       toast('Delivery recorded — stock updated', 'success');
       setDeliverModal(false);
       fetchOrder();
@@ -316,11 +336,19 @@ export default function SalesDetail() {
                 <h2 className="text-base font-semibold text-text-primary">Cancel Sales Order</h2>
                 <button onClick={() => setCancelModal(false)} className="btn-ghost btn-icon"><XCircle className="w-4 h-4" /></button>
               </div>
-              <div className="modal-body">
+              <div className="modal-body space-y-4">
                 <div className="alert-danger text-sm mb-3"><AlertTriangle className="w-4 h-4 shrink-0" />This cannot be undone.</div>
                 <p className="text-sm text-text-secondary">Cancel <strong className="text-primary">{order.orderNumber ?? order.id}</strong>?
                   {['CONFIRMED', 'PARTIALLY_DELIVERED'].includes(status) && ' Reserved stock will be released.'}
                 </p>
+                {['CONFIRMED', 'PARTIALLY_DELIVERED'].includes(status) && (
+                  <div className="form-group">
+                    <label className="label">Release from Warehouse *</label>
+                    <select className="select" value={warehouseId} onChange={e => setWarehouseId(e.target.value)}>
+                      {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
               <div className="modal-footer">
                 <button onClick={() => setCancelModal(false)} className="btn-secondary">Keep Order</button>
@@ -346,8 +374,14 @@ export default function SalesDetail() {
                 </h2>
                 <button onClick={() => setDeliverModal(false)} className="btn-ghost btn-icon"><XCircle className="w-4 h-4" /></button>
               </div>
-              <div className="modal-body">
-                <p className="text-sm text-text-secondary">This will deduct stock and record delivery for all items in <strong className="text-primary">{order.orderNumber ?? order.id}</strong>.</p>
+              <div className="modal-body space-y-4">
+                <p className="text-sm text-text-secondary">This will deduct stock and record delivery for all remaining items in <strong className="text-primary">{order.orderNumber ?? order.id}</strong>.</p>
+                <div className="form-group">
+                  <label className="label">Delivering from Warehouse *</label>
+                  <select className="select" value={warehouseId} onChange={e => setWarehouseId(e.target.value)}>
+                    {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="modal-footer">
                 <button onClick={() => setDeliverModal(false)} className="btn-secondary">Cancel</button>

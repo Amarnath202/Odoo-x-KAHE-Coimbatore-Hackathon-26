@@ -28,7 +28,7 @@ export default function UserCreate() {
     password: '',
     role: 'SALES_USER',
     isActive: true,
-    companyId: '00000000-0000-0000-0000-000000000001', // Default company
+    companyId: 'c1000000-0000-0000-0000-000000000001', // Default company
   });
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function UserCreate() {
             password: '', // Password not fetched
             role: data.role || 'SALES_USER',
             isActive: data.isActive !== false,
-            companyId: data.companyId || '00000000-0000-0000-0000-000000000001',
+            companyId: data.companyId || 'c1000000-0000-0000-0000-000000000001',
           });
         } catch (err) {
           console.error(err);
@@ -177,7 +177,7 @@ export default function UserCreate() {
                     name="password"
                     required={!isEdit}
                     className="input"
-                    placeholder="Enter password (min 8 chars)"
+                    placeholder="Min 8 chars, 1 uppercase, 1 number"
                     value={formData.password}
                     onChange={handleChange}
                   />

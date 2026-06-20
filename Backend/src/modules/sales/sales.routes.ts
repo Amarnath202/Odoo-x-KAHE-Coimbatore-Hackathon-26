@@ -19,7 +19,7 @@ const router = Router();
 router.use(authenticate);
 
 const salesRoles = [Role.ADMIN, Role.BUSINESS_OWNER, Role.SALES_USER, Role.INVENTORY_MANAGER];
-const deliverRoles = [Role.ADMIN, Role.SALES_USER, Role.INVENTORY_MANAGER];
+const deliverRoles = [Role.ADMIN, Role.BUSINESS_OWNER, Role.SALES_USER, Role.INVENTORY_MANAGER];
 
 /**
  * @swagger

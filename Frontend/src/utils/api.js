@@ -104,7 +104,11 @@ async function request(path, options = {}) {
   }
 
   if (!response.ok) {
-    const message = data?.message || data?.error || `HTTP ${response.status}`;
+    let message = data?.message || data?.error || `HTTP ${response.status}`;
+    if (data?.errors && Array.isArray(data.errors)) {
+      const detailMessages = data.errors.map(d => `${d.field ? d.field + ': ' : ''}${d.message}`).join(' | ');
+      if (detailMessages) message += ` (${detailMessages})`;
+    }
     const err = new Error(message);
     err.status = response.status;
     err.data = data;
@@ -180,7 +184,7 @@ export const salesApi = {
   create: (body) => api.post('/sales-orders', body),
   confirm: (id, body) => api.post(`/sales-orders/${id}/confirm`, body),
   deliver: (id, body) => api.post(`/sales-orders/${id}/deliver`, body),
-  cancel: (id) => api.post(`/sales-orders/${id}/cancel`, {}),
+  cancel: (id, body) => api.post(`/sales-orders/${id}/cancel`, body || {}),
 };
 
 // ─── Purchase ──────────────────────────────────────────────────────────────────

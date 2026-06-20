@@ -115,11 +115,6 @@ export class InventoryService {
 
     const current = await inventoryRepository.findOrCreate(warehouseId, productId, tx);
     const newReserved = Number(current.reservedQty) + quantity;
-    const newOnHand = Number(current.onHandQty);
-
-    if (newReserved > newOnHand) {
-      throw AppError.unprocessable(MESSAGES.INVENTORY.INSUFFICIENT);
-    }
 
     await inventoryRepository.updateQuantities(warehouseId, productId, { reservedQty: newReserved }, tx);
 
@@ -129,9 +124,9 @@ export class InventoryService {
         warehouseId,
         productId,
         movementType: LedgerMovementType.STOCK_ADJUSTMENT,
-        qtyBefore: Number(current.freeToUseQty),
-        qtyChanged: -quantity,
-        qtyAfter: Number(current.freeToUseQty) - quantity,
+        qtyBefore: Number(current.onHandQty),
+        qtyChanged: 0, // reserve doesn't change physical stock
+        qtyAfter: Number(current.onHandQty),
         referenceType,
         referenceId,
         createdBy: userId,
@@ -163,16 +158,17 @@ export class InventoryService {
     const currentOnHand = Number(current.onHandQty);
     const currentReserved = Number(current.reservedQty);
 
-    if (currentOnHand < quantity) {
-      throw AppError.unprocessable(MESSAGES.INVENTORY.INSUFFICIENT);
-    }
-
     const newOnHand = currentOnHand - quantity;
     const newReserved = Math.max(0, currentReserved - quantity);
 
-    await inventoryRepository.updateQuantities(warehouseId, productId, { onHandQty: newOnHand, reservedQty: newReserved }, tx);
+    await inventoryRepository.updateQuantities(
+      warehouseId,
+      productId,
+      { onHandQty: newOnHand, reservedQty: newReserved },
+      tx,
+    );
 
-    // Stock ledger entry
+    // Create a ledger entry to record the delivery.
     await tx.stockLedger.create({
       data: {
         warehouseId,
