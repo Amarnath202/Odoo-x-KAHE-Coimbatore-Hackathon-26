@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // UUID validation
-export const uuidSchema = z.string().uuid({ message: 'Invalid UUID format' });
+export const uuidSchema = z.string().min(1, { message: 'ID is required' });
 
 // Pagination query params
 export const paginationSchema = z.object({

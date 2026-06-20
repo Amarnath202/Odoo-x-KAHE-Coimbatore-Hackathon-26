@@ -183,3 +183,12 @@ export const warehousesApi = {
 export const unitsApi = {
   list: (params) => api.get('/units', params),
 };
+
+// ─── Users ─────────────────────────────────────────────────────────────────────
+export const usersApi = {
+  list: (params) => api.get('/users', params),
+  getById: (id) => api.get(`/users/${id}`),
+  create: (body) => api.post('/users', body),
+  update: (id, body) => api.put(`/users/${id}`, body),
+  delete: (id) => api.delete(`/users/${id}`),
+};

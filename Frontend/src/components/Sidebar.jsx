@@ -4,11 +4,12 @@ import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Package, ShoppingCart, Truck,
   Factory, BookOpen, Warehouse, ScrollText,
-  Zap, LogOut, ChevronRight,
+  Zap, LogOut, ChevronRight, Users
 } from 'lucide-react';
 import { useAuth, ROLE_PERMISSIONS } from '../context/AuthContext';
 
 const ALL_NAV = [
+
   {
     section: 'Overview',
     items: [
@@ -37,6 +38,12 @@ const ALL_NAV = [
       { label: 'Audit Logs', to: '/audit', icon: ScrollText, module: 'audit' },
     ],
   },
+  {
+    section: 'Other',
+    items: [
+      { label: 'User Management', to: '/users', icon: Users, module: 'users' },
+    ],
+  }
 ];
 
 export default function Sidebar() {

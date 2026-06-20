@@ -9,6 +9,9 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
 
+// Users module
+import Users from './pages/users/Users';
+import UserCreate from './pages/users/UserCreate';
 // Products module
 import Products from './pages/products/Products';
 import ProductCreate from './pages/products/ProductCreate';
@@ -51,6 +54,11 @@ export default function App() {
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<ProtectedRoute module="dashboard"><Dashboard /></ProtectedRoute>} />
+
+        {/* Users */}
+        <Route path="/users" element={<ProtectedRoute module="users"><Users /></ProtectedRoute>} />
+        <Route path="/users/create" element={<ProtectedRoute module="users"><UserCreate /></ProtectedRoute>} />
+        <Route path="/users/:id/edit" element={<ProtectedRoute module="users"><UserCreate /></ProtectedRoute>} />
 
         {/* Products */}
         <Route path="/products" element={<ProtectedRoute module="products"><Products /></ProtectedRoute>} />
