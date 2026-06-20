@@ -81,9 +81,10 @@ export default function ProductCreate() {
     if (!formData.sku.trim() && !isEdit) { toast('SKU is required', 'error'); return; }
 
     if (formData.procureOnDemand) {
-      if (formData.procurementType === 'MANUFACTURING' && !formData.bomId) {
-        toast('Bill of Materials is required for Manufacturing products.', 'error');
-        return;
+      if (formData.procurementType === 'MANUFACTURING' && !formData.bomId && formData.procureOnDemand === 'STRICT') {
+        // Relaxing this validation to avoid circular dependency: you need a product to create a BoM, and a BoM to create a product.
+        // toast('Bill of Materials is required for Manufacturing products.', 'error');
+        // return;
       }
     }
 
@@ -102,7 +103,9 @@ export default function ProductCreate() {
     if (formData.procureOnDemand) {
       body.procurementType = formData.procurementType;
       if (formData.procurementType === 'MANUFACTURING') {
-        body.bomId = formData.bomId;
+        if (formData.bomId) {
+          body.bomId = formData.bomId;
+        }
       }
     }
 

@@ -72,8 +72,8 @@ export default function BomDetail() {
                       <tr key={c.id ?? i}>
                         <td className="text-text-muted text-xs">{i + 1}</td>
                         <td>
-                          <p className="font-medium text-text-primary">{c.component?.name ?? '—'}</p>
-                          <p className="text-xs text-text-muted font-mono">{c.component?.sku ?? ''}</p>
+                          <p className="font-medium text-text-primary">{c.product?.name ?? c.component?.name ?? '—'}</p>
+                          <p className="text-xs text-text-muted font-mono">{c.product?.sku ?? c.component?.sku ?? ''}</p>
                         </td>
                         <td className="text-center font-semibold">{c.quantity}</td>
                         <td className="text-text-muted text-sm">{c.unit?.name ?? '—'}</td>

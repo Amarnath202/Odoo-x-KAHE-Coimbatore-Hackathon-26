@@ -35,7 +35,7 @@ export default function BomCreate() {
     setForm(f => ({ ...f, companyId }));
     const params = companyId ? { companyId } : {};
     Promise.all([
-      productsApi.list({ ...params, procurementType: 'MANUFACTURING' }).catch(() => productsApi.list(params).catch(() => null)),
+      productsApi.list({ ...params, limit: 100 }).catch(() => null),
       unitsApi.list().catch(() => null),
     ]).then(([pRes, uRes]) => {
       setProducts(pRes?.data?.items ?? pRes?.data ?? []);
@@ -132,7 +132,7 @@ export default function BomCreate() {
               <select className="select" value={form.productId}
                 onChange={e => setForm(f => ({ ...f, productId: e.target.value }))} required>
                 <option value="">— Select product —</option>
-                {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>)}
+                {products.filter(p => p.procurementType === 'MANUFACTURING').map(p => <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>)}
               </select>
             </div>
             <div className="form-group">
