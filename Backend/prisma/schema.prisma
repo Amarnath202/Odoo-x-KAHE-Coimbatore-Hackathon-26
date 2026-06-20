@@ -1,0 +1,553 @@
+// ============================================================
+// SHIV FURNITURE WORKS — ERP PRISMA SCHEMA
+// 22 Production-grade tables
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  ADMIN
+  SALES_USER
+  PURCHASE_USER
+  MANUFACTURING_USER
+  INVENTORY_MANAGER
+  BUSINESS_OWNER
+}
+
+enum OrderStatus {
+  DRAFT
+  CONFIRMED
+  PARTIALLY_DELIVERED
+  FULLY_DELIVERED
+  CANCELLED
+}
+
+enum PurchaseStatus {
+  DRAFT
+  CONFIRMED
+  PARTIALLY_RECEIVED
+  FULLY_RECEIVED
+  CANCELLED
+}
+
+enum ManufacturingStatus {
+  DRAFT
+  CONFIRMED
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum WorkOrderStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+enum ProcurementType {
+  PURCHASE
+  MANUFACTURING
+}
+
+enum LedgerMovementType {
+  PURCHASE_RECEIPT
+  SALES_DELIVERY
+  MANUFACTURING_CONSUMPTION
+  MANUFACTURING_PRODUCTION
+  STOCK_ADJUSTMENT
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  CONFIRM
+  DELIVER
+  RECEIVE
+  COMPLETE
+  CANCEL
+  LOGIN
+  LOGOUT
+  ADJUST
+}
+
+// ============================================================
+// TABLE 1: companies
+// ============================================================
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users               User[]
+  warehouses          Warehouse[]
+  categories          Category[]
+  products            Product[]
+  customers           Customer[]
+  vendors             Vendor[]
+  salesOrders         SalesOrder[]
+  purchaseOrders      PurchaseOrder[]
+  boms                Bom[]
+  manufacturingOrders ManufacturingOrder[]
+  auditLogs           AuditLog[]
+  procurementLogs     ProcurementLog[]
+
+  @@map("companies")
+}
+
+// ============================================================
+// TABLE 2: users
+// ============================================================
+
+model User {
+  id           String    @id @default(uuid())
+  companyId    String    @map("company_id")
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         Role      @default(SALES_USER)
+  isActive     Boolean   @default(true) @map("is_active")
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  company       Company        @relation(fields: [companyId], references: [id])
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+// ============================================================
+// TABLE 3: refresh_tokens
+// ============================================================
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash") @db.Text
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// ============================================================
+// TABLE 4: warehouses
+// ============================================================
+
+model Warehouse {
+  id        String   @id @default(uuid())
+  companyId String   @map("company_id")
+  name      String
+  location  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company             Company              @relation(fields: [companyId], references: [id])
+  inventory           Inventory[]
+  manufacturingOrders ManufacturingOrder[]
+  stockLedger         StockLedger[]
+
+  @@map("warehouses")
+}
+
+// ============================================================
+// TABLE 5: units
+// ============================================================
+
+model Unit {
+  id     String @id @default(uuid())
+  name   String
+  symbol String @unique
+
+  products      Product[]
+  bomComponents BomComponent[]
+
+  @@map("units")
+}
+
+// ============================================================
+// TABLE 6: categories
+// ============================================================
+
+model Category {
+  id        String   @id @default(uuid())
+  companyId String   @map("company_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company  Company   @relation(fields: [companyId], references: [id])
+  products Product[]
+
+  @@map("categories")
+}
+
+// ============================================================
+// TABLE 7: products
+// ============================================================
+
+model Product {
+  id              String          @id @default(uuid())
+  companyId       String          @map("company_id")
+  sku             String
+  name            String
+  description     String?
+  unitId          String?         @map("unit_id")
+  categoryId      String?         @map("category_id")
+  salesPrice      Decimal         @default(0) @map("sales_price") @db.Decimal(12, 2)
+  costPrice       Decimal         @default(0) @map("cost_price") @db.Decimal(12, 2)
+  procureOnDemand Boolean         @default(false) @map("procure_on_demand")
+  procurementType ProcurementType @default(PURCHASE) @map("procurement_type")
+  vendorId        String?         @map("vendor_id")
+  bomId           String?         @map("bom_id")
+  deletedAt       DateTime?       @map("deleted_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  company            Company              @relation(fields: [companyId], references: [id])
+  unit               Unit?                @relation(fields: [unitId], references: [id])
+  category           Category?            @relation(fields: [categoryId], references: [id])
+  vendor             Vendor?              @relation("VendorProducts", fields: [vendorId], references: [id])
+  defaultBom         Bom?                 @relation("ProductDefaultBom", fields: [bomId], references: [id])
+  inventory          Inventory[]
+  salesOrderItems    SalesOrderItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+  boms               Bom[]                @relation("BomFinishedProduct")
+  bomComponents      BomComponent[]
+  manufacturingOrders ManufacturingOrder[]
+  stockLedger        StockLedger[]
+  procurementLogs    ProcurementLog[]
+
+  @@unique([companyId, sku])
+  @@map("products")
+}
+
+// ============================================================
+// TABLE 8: inventory
+// ============================================================
+
+model Inventory {
+  id           String   @id @default(uuid())
+  warehouseId  String   @map("warehouse_id")
+  productId    String   @map("product_id")
+  onHandQty    Decimal  @default(0) @map("on_hand_qty") @db.Decimal(12, 2)
+  reservedQty  Decimal  @default(0) @map("reserved_qty") @db.Decimal(12, 2)
+  freeToUseQty Decimal  @default(0) @map("free_to_use_qty") @db.Decimal(12, 2)
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@unique([warehouseId, productId])
+  @@map("inventory")
+}
+
+// ============================================================
+// TABLE 9: customers
+// ============================================================
+
+model Customer {
+  id        String    @id @default(uuid())
+  companyId String    @map("company_id")
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  company     Company      @relation(fields: [companyId], references: [id])
+  salesOrders SalesOrder[]
+
+  @@map("customers")
+}
+
+// ============================================================
+// TABLE 10: vendors
+// ============================================================
+
+model Vendor {
+  id        String    @id @default(uuid())
+  companyId String    @map("company_id")
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  company        Company         @relation(fields: [companyId], references: [id])
+  products       Product[]       @relation("VendorProducts")
+  purchaseOrders PurchaseOrder[]
+
+  @@map("vendors")
+}
+
+// ============================================================
+// TABLE 11: sales_orders
+// ============================================================
+
+model SalesOrder {
+  id          String      @id @default(uuid())
+  companyId   String      @map("company_id")
+  customerId  String      @map("customer_id")
+  status      OrderStatus @default(DRAFT)
+  totalAmount Decimal     @default(0) @map("total_amount") @db.Decimal(14, 2)
+  notes       String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  company  Company          @relation(fields: [companyId], references: [id])
+  customer Customer         @relation(fields: [customerId], references: [id])
+  items    SalesOrderItem[]
+
+  @@map("sales_orders")
+}
+
+// ============================================================
+// TABLE 12: sales_order_items
+// ============================================================
+
+model SalesOrderItem {
+  id           String  @id @default(uuid())
+  salesOrderId String  @map("sales_order_id")
+  productId    String  @map("product_id")
+  quantity     Decimal @db.Decimal(12, 2)
+  unitPrice    Decimal @map("unit_price") @db.Decimal(12, 2)
+  deliveredQty Decimal @default(0) @map("delivered_qty") @db.Decimal(12, 2)
+
+  salesOrder SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  product    Product    @relation(fields: [productId], references: [id])
+
+  @@map("sales_order_items")
+}
+
+// ============================================================
+// TABLE 13: purchase_orders
+// ============================================================
+
+model PurchaseOrder {
+  id            String         @id @default(uuid())
+  companyId     String         @map("company_id")
+  vendorId      String         @map("vendor_id")
+  status        PurchaseStatus @default(DRAFT)
+  totalAmount   Decimal        @default(0) @map("total_amount") @db.Decimal(14, 2)
+  autoGenerated Boolean        @default(false) @map("auto_generated")
+  notes         String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  company Company             @relation(fields: [companyId], references: [id])
+  vendor  Vendor              @relation(fields: [vendorId], references: [id])
+  items   PurchaseOrderItem[]
+
+  @@map("purchase_orders")
+}
+
+// ============================================================
+// TABLE 14: purchase_order_items
+// ============================================================
+
+model PurchaseOrderItem {
+  id              String  @id @default(uuid())
+  purchaseOrderId String  @map("purchase_order_id")
+  productId       String  @map("product_id")
+  quantity        Decimal @db.Decimal(12, 2)
+  unitPrice       Decimal @map("unit_price") @db.Decimal(12, 2)
+  receivedQty     Decimal @default(0) @map("received_qty") @db.Decimal(12, 2)
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product       Product       @relation(fields: [productId], references: [id])
+
+  @@map("purchase_order_items")
+}
+
+// ============================================================
+// TABLE 15: boms (Bill of Materials)
+// ============================================================
+
+model Bom {
+  id        String   @id @default(uuid())
+  companyId String   @map("company_id")
+  productId String   @map("product_id")
+  name      String
+  version   String   @default("1.0")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company             Company              @relation(fields: [companyId], references: [id])
+  product             Product              @relation("BomFinishedProduct", fields: [productId], references: [id])
+  components          BomComponent[]
+  operations          BomOperation[]
+  productLinks        Product[]            @relation("ProductDefaultBom")
+  manufacturingOrders ManufacturingOrder[]
+
+  @@map("boms")
+}
+
+// ============================================================
+// TABLE 16: bom_components
+// ============================================================
+
+model BomComponent {
+  id        String  @id @default(uuid())
+  bomId     String  @map("bom_id")
+  productId String  @map("product_id")
+  quantity  Decimal @db.Decimal(12, 2)
+  unitId    String? @map("unit_id")
+
+  bom     Bom     @relation(fields: [bomId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+  unit    Unit?   @relation(fields: [unitId], references: [id])
+
+  @@map("bom_components")
+}
+
+// ============================================================
+// TABLE 17: bom_operations
+// ============================================================
+
+model BomOperation {
+  id              String @id @default(uuid())
+  bomId           String @map("bom_id")
+  name            String
+  sequence        Int
+  durationMinutes Int    @default(0) @map("duration_minutes")
+
+  bom        Bom         @relation(fields: [bomId], references: [id], onDelete: Cascade)
+  workOrders WorkOrder[]
+
+  @@map("bom_operations")
+}
+
+// ============================================================
+// TABLE 18: manufacturing_orders
+// ============================================================
+
+model ManufacturingOrder {
+  id            String              @id @default(uuid())
+  companyId     String              @map("company_id")
+  bomId         String              @map("bom_id")
+  productId     String              @map("product_id")
+  quantity      Decimal             @db.Decimal(12, 2)
+  status        ManufacturingStatus @default(DRAFT)
+  warehouseId   String              @map("warehouse_id")
+  autoGenerated Boolean             @default(false) @map("auto_generated")
+  notes         String?
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+
+  company    Company     @relation(fields: [companyId], references: [id])
+  bom        Bom         @relation(fields: [bomId], references: [id])
+  product    Product     @relation(fields: [productId], references: [id])
+  warehouse  Warehouse   @relation(fields: [warehouseId], references: [id])
+  workOrders WorkOrder[]
+
+  @@map("manufacturing_orders")
+}
+
+// ============================================================
+// TABLE 19: work_orders
+// ============================================================
+
+model WorkOrder {
+  id                   String          @id @default(uuid())
+  manufacturingOrderId String          @map("manufacturing_order_id")
+  operationId          String          @map("operation_id")
+  status               WorkOrderStatus @default(PENDING)
+  startedAt            DateTime?       @map("started_at")
+  completedAt          DateTime?       @map("completed_at")
+
+  manufacturingOrder ManufacturingOrder @relation(fields: [manufacturingOrderId], references: [id], onDelete: Cascade)
+  operation          BomOperation       @relation(fields: [operationId], references: [id])
+
+  @@map("work_orders")
+}
+
+// ============================================================
+// TABLE 20: stock_ledger
+// ============================================================
+
+model StockLedger {
+  id            String             @id @default(uuid())
+  warehouseId   String             @map("warehouse_id")
+  productId     String             @map("product_id")
+  movementType  LedgerMovementType @map("movement_type")
+  qtyBefore     Decimal            @map("qty_before") @db.Decimal(12, 2)
+  qtyChanged    Decimal            @map("qty_changed") @db.Decimal(12, 2)
+  qtyAfter      Decimal            @map("qty_after") @db.Decimal(12, 2)
+  referenceType String?            @map("reference_type")
+  referenceId   String?            @map("reference_id")
+  createdBy     String?            @map("created_by")
+  createdAt     DateTime           @default(now()) @map("created_at")
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@map("stock_ledger")
+}
+
+// ============================================================
+// TABLE 21: audit_logs
+// ============================================================
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  companyId String      @map("company_id")
+  userId    String?     @map("user_id")
+  module    String
+  action    AuditAction
+  entityId  String?     @map("entity_id")
+  oldValue  Json?       @map("old_value")
+  newValue  Json?       @map("new_value")
+  ipAddress String?     @map("ip_address")
+  timestamp DateTime    @default(now())
+
+  company Company @relation(fields: [companyId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// ============================================================
+// TABLE 22: procurement_logs
+// ============================================================
+
+model ProcurementLog {
+  id                 String   @id @default(uuid())
+  companyId          String   @map("company_id")
+  triggerSource      String   @map("trigger_source")
+  productId          String   @map("product_id")
+  shortageQty        Decimal  @map("shortage_qty") @db.Decimal(12, 2)
+  generatedOrderType String   @map("generated_order_type")
+  generatedOrderId   String?  @map("generated_order_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("procurement_logs")
+}
