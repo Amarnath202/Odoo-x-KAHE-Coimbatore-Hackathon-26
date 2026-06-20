@@ -10,7 +10,7 @@ export const createUserSchema = z.object({
     .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
     .regex(/[0-9]/, 'Must contain at least one number'),
   role: z.nativeEnum(Role, { errorMap: () => ({ message: 'Invalid role' }) }),
-  companyId: z.string().uuid('Invalid company ID'),
+  companyId: z.string().min(1),
 });
 
 export const updateUserSchema = z.object({
@@ -24,7 +24,7 @@ export const userQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
   role: z.nativeEnum(Role).optional(),
   isActive: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
-  companyId: z.string().uuid().optional(),
+  companyId: z.string().min(1).optional(),
   search: z.string().optional(),
 });
 

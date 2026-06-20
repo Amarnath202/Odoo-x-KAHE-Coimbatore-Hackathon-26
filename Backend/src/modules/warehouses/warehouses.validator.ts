@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const createWarehouseSchema = z.object({
-  companyId: z.string().uuid('Invalid company ID'),
+  companyId: z.string().min(1),
   name: z.string().min(2, 'Name must be at least 2 characters'),
   location: z.string().optional(),
 });

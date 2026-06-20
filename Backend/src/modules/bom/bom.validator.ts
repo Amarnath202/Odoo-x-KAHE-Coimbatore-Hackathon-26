@@ -3,16 +3,16 @@ import { z } from 'zod';
 const BOM_MIN_COMPONENTS = 'BoM must have at least one component';
 
 export const createBomSchema = z.object({
-  companyId: z.string().uuid(),
-  productId: z.string().uuid('Finished goods product ID required'),
+  companyId: z.string().min(1),
+  productId: z.string().min(1),
   name: z.string().min(2),
   version: z.string().default('1.0'),
   components: z
     .array(
       z.object({
-        productId: z.string().uuid('Component product ID required'),
+        productId: z.string().min(1),
         quantity: z.coerce.number().positive('Quantity must be positive'),
-        unitId: z.string().uuid().optional(),
+        unitId: z.string().min(1).optional(),
       }),
     )
     .min(1, BOM_MIN_COMPONENTS),
@@ -34,9 +34,9 @@ export const updateBomSchema = z.object({
   components: z
     .array(
       z.object({
-        productId: z.string().uuid(),
+        productId: z.string().min(1),
         quantity: z.coerce.number().positive(),
-        unitId: z.string().uuid().optional(),
+        unitId: z.string().min(1).optional(),
       }),
     )
     .min(1)
