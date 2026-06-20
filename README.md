@@ -1,24 +1,6 @@
-<<<<<<< HEAD
-# React + Vite
+# Odoo Mini-ERP — Shiv Furniture Works
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-=======
-# Mini ERP – Shiv Furniture Works
-
-A production-style Mini ERP system built for a hiring hackathon.
+A production-style Mini ERP system built for a hiring hackathon, inspired by Odoo and ERPNext.
 
 ## Project Overview
 
@@ -35,126 +17,63 @@ This ERP helps a furniture manufacturing company manage:
 * Audit Logs
 * Dashboard & Analytics
 
-The system is inspired by ERP solutions like Odoo and ERPNext.
-
 ---
 
-## Tech Stack
+## Tech Stack (Frontend)
 
-### Backend
-
-* Node.js
-* Express.js
-* TypeScript
-* PostgreSQL
-* Prisma ORM
-* JWT Authentication
-* Refresh Tokens
-* RBAC
-* Zod Validation
-* Swagger
-* Winston Logger
-
-### Frontend
-
-* React
-* TypeScript
-* Vite
-* Tailwind CSS
-* Zustand
-* React Query
-* Recharts
+* React 19 + Vite
+* Tailwind CSS v3
+* React Router v6
+* Framer Motion
+* Lucide React Icons
+* localStorage (demo data store; backend integration later)
 
 ---
 
 ## Core Business Flow
 
-Customer Order
+Customer Order → Inventory Check
 
-↓
+* Stock Available? → Reserve & Deliver
+* Stock Not Available? → Trigger Procurement Engine
 
-Inventory Check
-
-↓
-
-Stock Available?
-
-* Yes → Reserve & Deliver
-* No → Trigger Procurement
-
-↓
-
-Procurement Engine
-
-↓
-
-Purchase Order / Manufacturing Order
-
-↓
-
-Inventory Update
-
-↓
-
-Stock Ledger Entry
-
-↓
-
-Audit Log Entry
+Procurement Engine → Purchase Order / Manufacturing Order → Inventory Update → Stock Ledger Entry → Audit Log Entry
 
 ---
 
 ## Team Responsibilities
 
-### Backend Branch
+### Your Modules
+1. **Foundation** — Design system, routing shell, shared components
+2. **Dashboard** — KPI cards, recent activity
+3. **Products** — Product list, create, detail
+4. **Bill of Materials (BoM)** — BoM list, create, detail
+5. **Inventory & Audit Logs** — Stock overview, stock ledger, audit logs
 
-Responsible for:
-
-* Authentication & Authorization
-* Products
-* Inventory Engine
-* Sales Module
-* Purchase Module
-* BoM
-* Manufacturing
-* Procurement Automation
-* Stock Ledger
-* Audit Logs
-* Dashboard APIs
-
-### Frontend Branch
-
-Responsible for:
-
-* Dashboard UI
-* Product Management UI
-* Inventory UI
-* Sales UI
-* Purchase UI
-* Manufacturing UI
-* Charts & Analytics
-* API Integration
+### Friend's Modules
+1. **Login / Auth** — Role-based access (Admin, Sales, Purchase, Manufacturing, Inventory Manager)
+2. **Sales** — SO list, create, detail with stock reservation + delivery logic
+3. **Purchase** — PO list, create, detail with receive logic
+4. **Manufacturing** — MO list, create, detail with work orders + BoM auto-fetch
 
 ---
 
 ## Git Branch Strategy
 
 ```bash
-main
-backend
-frontend
+main            ← stable foundation, merged modules
+master          ← your working branch
+Asik-frontend   ← friend's working branch
 ```
 
-### Backend Developer
-
+### Your Branch
 ```bash
-git checkout -b backend
+git push origin master
 ```
 
-### Frontend Developer
-
+### Friend's Branch
 ```bash
-git checkout -b frontend
+git push origin Asik-frontend
 ```
 
 ---
@@ -175,8 +94,14 @@ Focus on working business flows rather than unnecessary features.
 
 ## Project Status
 
-Current Phase:
-
-* Architecture & Planning Completed ✅
-* Development In Progress 🚀
->>>>>>> 7d693da2fdace402274f67fd5d1cf5ca5d06e08e
+| Module | Owner | Status |
+|---|---|---|
+| Foundation / Design System | You | ✅ Complete |
+| Dashboard | You | ✅ Complete |
+| Products | You | ✅ Complete |
+| Bill of Materials | You | 🚧 In Progress |
+| Inventory & Audit Logs | You | 🚧 In Progress |
+| Login / Auth | Friend | 🔄 Pending |
+| Sales | Friend | 🔄 Pending |
+| Purchase | Friend | 🔄 Pending |
+| Manufacturing | Friend | 🔄 Pending |
