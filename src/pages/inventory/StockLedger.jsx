@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowDownRight, ArrowUpRight, Search, Activity, Package } from 'lucide-react';
 import { PageWrapper } from '../../components/UI';
-import { getStore, STORES, formatDate } from '../../utils/storage';
+import { getStore, STORES } from '../../utils/storage';
+import { formatDateTime } from '../../components/UI';
 
 export default function StockLedger() {
   const [ledger, setLedger] = useState([]);
@@ -12,7 +13,7 @@ export default function StockLedger() {
 
   useEffect(() => {
     // Sort ledger by date descending
-    const rawLedger = getStore(STORES.LEDGER).sort((a, b) => new Date(b.date) - new Date(a.date));
+    const rawLedger = getStore(STORES.STOCK_LEDGER).sort((a, b) => new Date(b.date) - new Date(a.date));
     setLedger(rawLedger);
     setProducts(getStore(STORES.PRODUCTS));
   }, []);
@@ -103,7 +104,7 @@ export default function StockLedger() {
                   return (
                     <tr key={entry.id} className="border-b border-border hover:bg-black/[0.01]">
                       <td className="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">
-                        {formatDate(entry.date)}
+                        {formatDateTime(entry.date)}
                       </td>
                       <td className="px-6 py-4">
                         {prod ? (

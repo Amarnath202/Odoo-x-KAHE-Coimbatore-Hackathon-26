@@ -8,7 +8,7 @@ import { useToast } from '../../context/ToastContext';
 export default function BomDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const toast = useToast();
   const [bom, setBom] = useState(null);
   const [products, setProducts] = useState([]);
 

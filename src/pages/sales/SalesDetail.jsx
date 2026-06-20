@@ -9,7 +9,7 @@ import { PageWrapper, formatINR, formatDate, formatDateTime } from '../../compon
 import StatusBadge from '../../components/StatusBadge';
 import {
   getOne, STORES, upsert, addAuditLog,
-  adjustStock, addLedgerEntry, getProductStock, getStore,
+  adjustStock, addLedgerEntry, getProductStock, getStore, nextRef,
 } from '../../utils/storage';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -81,6 +81,67 @@ export default function SalesDetail() {
         reference: order.id,
         note: `Reserved on Confirm — ${order.id}`,
       });
+
+      // Procurement Automation (MTO)
+      const isMto = procurementAlert(line.productId);
+      const shortage = Number(line.qty) - stock.freeToUse;
+      
+      if (isMto && shortage > 0) {
+        mtoAlerts.push(line.productName);
+        const products = getStore(STORES.PRODUCTS);
+        const product = products.find(p => p.id === line.productId);
+        
+        if (product.procurementType === 'Purchase') {
+          const poId = nextRef('PO');
+          upsert(STORES.PURCHASE_ORDERS, {
+            id: poId,
+            vendor: product.vendor || 'Auto Vendor',
+            date: new Date().toISOString(),
+            status: 'Draft',
+            total: shortage * (product.costPrice || 0),
+            lines: [{
+              _key: Date.now() + Math.random(),
+              productId: product.id,
+              productName: product.name,
+              qty: shortage,
+              unitCost: product.costPrice || 0,
+              subtotal: shortage * (product.costPrice || 0)
+            }]
+          });
+          addAuditLog({
+            user: 'System', role: 'System', module: 'Purchase', action: 'Created', reference: poId, newValue: 'Auto-created from Sales Order'
+          });
+        } else if (product.procurementType === 'Manufacturing') {
+          const moId = nextRef('MO');
+          // Fetch BoM
+          const boms = getStore(STORES.BOM);
+          const bom = boms.find(b => b.id === product.bomId || b.finishedProductId === product.id);
+          const components = bom ? bom.components.map(c => ({ ...c, required: c.qty * shortage })) : [];
+          const workOrders = bom ? bom.operations.map((op, i) => ({
+            id: `WO-${moId}-${i + 1}`,
+            name: op.name,
+            workCenter: op.workCenter,
+            duration: op.duration,
+            status: 'Pending'
+          })) : [];
+
+          upsert(STORES.MANUFACTURING_ORDERS, {
+            id: moId,
+            productId: product.id,
+            productName: product.name,
+            qty: shortage,
+            assignee: 'Unassigned',
+            date: new Date().toISOString(),
+            status: 'Draft',
+            bomId: bom?.id || null,
+            components,
+            workOrders
+          });
+          addAuditLog({
+            user: 'System', role: 'System', module: 'Manufacturing', action: 'Created', reference: moId, newValue: 'Auto-created from Sales Order'
+          });
+        }
+      }
     });
 
     upsert(STORES.SALES_ORDERS, { ...order, status: 'Confirmed' });

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ShieldAlert, FileText, User } from 'lucide-react';
 import { PageWrapper } from '../../components/UI';
-import { getStore, STORES, formatDate } from '../../utils/storage';
+import { getStore, STORES } from '../../utils/storage';
+import { formatDateTime } from '../../components/UI';
 
 export default function AuditLogs() {
   const [logs, setLogs] = useState([]);
@@ -10,7 +11,7 @@ export default function AuditLogs() {
 
   useEffect(() => {
     // Sort logs by timestamp descending
-    const rawLogs = getStore(STORES.AUDIT_LOG).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const rawLogs = getStore(STORES.AUDIT_LOGS).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     setLogs(rawLogs);
   }, []);
 
@@ -87,7 +88,7 @@ export default function AuditLogs() {
                 filteredLogs.map(log => (
                   <tr key={log.id} className="border-b border-border hover:bg-black/[0.01]">
                     <td className="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">
-                      {formatDate(log.timestamp)}
+                      {formatDateTime(log.timestamp)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">

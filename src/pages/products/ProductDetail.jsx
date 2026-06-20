@@ -9,7 +9,7 @@ import { useToast } from '../../context/ToastContext';
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const toast = useToast();
   const [product, setProduct] = useState(null);
   const [stock, setStock] = useState({ onHand: 0, reserved: 0, freeToUse: 0 });
   const [movements, setMovements] = useState([]);

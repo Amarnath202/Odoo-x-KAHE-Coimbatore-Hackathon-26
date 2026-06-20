@@ -10,7 +10,7 @@ export default function ProductCreate() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast();
+  const toast = useToast();
   const isEdit = !!id;
 
   const [formData, setFormData] = useState({
