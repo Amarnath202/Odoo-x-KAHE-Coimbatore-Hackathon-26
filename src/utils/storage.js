@@ -219,3 +219,5 @@ export function seedDemoData() {
   ];
   setStore(STORES.AUDIT_LOGS, auditLogs);
 }
+
+export const formatDate = (dateStr) => new Date(dateStr).toLocaleString();
