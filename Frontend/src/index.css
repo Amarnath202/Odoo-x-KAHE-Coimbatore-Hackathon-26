@@ -274,7 +274,7 @@
   /* ── Sidebar ── */
   .sidebar {
     @apply fixed left-0 top-0 h-full w-60 bg-bg-surface border-r border-border
-           flex flex-col z-40 transition-transform duration-300;
+           flex flex-col z-40 transition-transform duration-300 -translate-x-full md:translate-x-0;
   }
  
   .sidebar-logo {
@@ -306,13 +306,13 @@
  
   /* ── Header ── */
   .header {
-    @apply fixed top-0 left-60 right-0 h-16 bg-white/90 backdrop-blur-md
-           border-b border-border flex items-center justify-between px-6 z-30;
+    @apply fixed top-0 left-0 md:left-60 right-0 h-16 bg-white/90 backdrop-blur-md
+           border-b border-border flex items-center justify-between px-4 md:px-6 z-30 transition-all duration-300;
   }
  
   /* ── Main Content ── */
   .main-content {
-    @apply ml-60 mt-16 p-6 bg-bg;
+    @apply ml-0 md:ml-60 mt-16 p-4 md:p-6 bg-bg transition-all duration-300;
     min-height: calc(100vh - 64px);
   }
 
@@ -382,6 +382,16 @@
 
   .animate-in {
     animation: slideUp 0.4s ease-out both;
+  }
+
+  @keyframes subtle-pan {
+    0% { background-position: 0% 50%; background-size: 110%; }
+    50% { background-position: 100% 50%; background-size: 115%; }
+    100% { background-position: 0% 50%; background-size: 110%; }
+  }
+
+  .animate-bg-pan {
+    animation: subtle-pan 40s ease-in-out infinite;
   }
 
   .stock-low {

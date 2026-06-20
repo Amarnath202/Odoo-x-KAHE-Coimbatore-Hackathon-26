@@ -6,7 +6,7 @@ import { sendError } from '../utils/response';
  */
 export const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  max: 5000,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {
