@@ -5,14 +5,6 @@ import { Zap, LogIn, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
-// Quick-login presets (for demo convenience — still hits real backend)
-const DEMO_USERS = [
-  { name: 'Admin User',    email: 'admin123@gmail.com',          password: 'admin123'    },
-  { name: 'Priya Sharma',  email: 'sales@shivfurniture.com',     password: 'sales123'    },
-  { name: 'Rajesh Kumar',  email: 'purchase@shivfurniture.com',  password: 'purchase123' },
-  { name: 'Amit Singh',    email: 'mfg@shivfurniture.com',       password: 'mfg123'      },
-  { name: 'Sunita Patel',  email: 'inventory@shivfurniture.com', password: 'inv123'      },
-];
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -44,17 +36,19 @@ export default function Login() {
     navigate('/dashboard');
   };
 
-  const quickLogin = (u) => {
-    setForm({ email: u.email, password: u.password });
-  };
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Decorative blobs */}
-      <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-accent/20 rounded-full blur-3xl pointer-events-none" />
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden animate-bg-pan"
+      style={{
+        backgroundImage: `url('/bg-login.png')`,
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
 
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md relative z-10">
         {/* Logo */}
         <motion.div
           className="text-center mb-8"
@@ -65,13 +59,13 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent mb-4 shadow-glow">
             <Zap className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-text-primary">Odoo Mini-ERP</h1>
-          <p className="text-sm text-text-muted mt-1">Shiv Furniture Works</p>
+          <h1 className="text-2xl font-bold text-white drop-shadow-md">Odoo Mini-ERP</h1>
+          <p className="text-sm text-white/80 mt-1">Shiv Furniture Works</p>
         </motion.div>
 
         {/* Card */}
         <motion.div
-          className="card"
+          className="card-glass !bg-white/95"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -128,27 +122,7 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Quick login */}
-          <div className="divider" />
-          <p className="text-xs text-text-muted mb-3 flex items-center gap-2">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Quick login for demo
-          </p>
-          <div className="grid grid-cols-1 gap-1.5">
-            {DEMO_USERS.map(u => (
-              <button
-                key={u.email}
-                onClick={() => quickLogin(u)}
-                className="flex items-center justify-between px-3 py-2 rounded-btn bg-bg-light/50 hover:bg-bg-light border border-white/5 text-left transition-colors"
-              >
-                <div>
-                  <p className="text-xs font-medium text-text-primary">{u.name}</p>
-                  <p className="text-[10px] text-text-muted">{u.email}</p>
-                </div>
-                <span className="text-[10px] text-text-muted font-mono">{u.password}</span>
-              </button>
-            ))}
-          </div>
+
         </motion.div>
       </div>
     </div>

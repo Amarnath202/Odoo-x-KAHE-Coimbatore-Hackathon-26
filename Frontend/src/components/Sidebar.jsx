@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Package, ShoppingCart, Truck,
   Factory, BookOpen, Warehouse, ScrollText,
-  Zap, LogOut, ChevronRight, Users
+  Zap, LogOut, ChevronRight, Users,
 } from 'lucide-react';
 import { useAuth, ROLE_PERMISSIONS } from '../context/AuthContext';
 
@@ -39,14 +39,16 @@ const ALL_NAV = [
     ],
   },
   {
-    section: 'Other',
+    section: 'Others',
     items: [
+      { label: 'Customer Management', to: '/customers', icon: Users, module: 'customers' },
+      { label: 'Vendor Management', to: '/vendors', icon: Users, module: 'vendors' },
       { label: 'User Management', to: '/users', icon: Users, module: 'users' },
     ],
-  }
+  },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const { user, logout, hasPermission } = useAuth();
   const navigate = useNavigate();
 
@@ -64,7 +66,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isMobileMenuOpen ? '!translate-x-0' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
         <div className="w-9 h-9 rounded-btn bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0 shadow-glow">
@@ -94,6 +96,7 @@ export default function Sidebar() {
                 >
                   <NavLink
                     to={item.to}
+                    onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
                     className={({ isActive }) =>
                       `nav-link ${isActive ? 'active' : ''}`
                     }

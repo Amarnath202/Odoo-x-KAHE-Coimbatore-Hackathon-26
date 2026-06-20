@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Bell, Search, ChevronRight } from 'lucide-react';
+import { Bell, Search, ChevronRight, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const BREADCRUMB_MAP = {
@@ -19,7 +19,7 @@ const BREADCRUMB_MAP = {
   '/audit': ['Audit Logs'],
 };
 
-export default function Header() {
+export default function Header({ setIsMobileMenuOpen }) {
   const { user } = useAuth();
   const location = useLocation();
 
@@ -45,8 +45,15 @@ export default function Header() {
 
   return (
     <header className="header">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-sm">
+      <div className="flex items-center gap-3">
+        <button 
+          className="md:hidden btn-ghost btn-icon -ml-2"
+          onClick={() => setIsMobileMenuOpen(true)}
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        {/* Breadcrumb */}
+        <div className="hidden sm:flex items-center gap-1.5 text-sm">
         {crumbs.map((crumb, i) => (
           <React.Fragment key={i}>
             {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-text-muted" />}
@@ -55,6 +62,7 @@ export default function Header() {
             </span>
           </React.Fragment>
         ))}
+        </div>
       </div>
 
       {/* Right side */}

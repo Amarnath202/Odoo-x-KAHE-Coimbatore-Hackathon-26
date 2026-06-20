@@ -14,10 +14,10 @@ export const ROLES = {
 };
 
 export const ROLE_PERMISSIONS = {
-  [ROLES.ADMIN]: ['users', 'dashboard', 'products', 'sales', 'purchase', 'manufacturing', 'bom', 'inventory', 'audit'],
-  [ROLES.BUSINESS_OWNER]: ['users', 'dashboard', 'products', 'sales', 'purchase', 'manufacturing', 'bom', 'inventory', 'audit'],
-  [ROLES.SALES_USER]: ['dashboard', 'sales'],
-  [ROLES.PURCHASE_USER]: ['dashboard', 'purchase'],
+  [ROLES.ADMIN]: ['users', 'dashboard', 'products', 'sales', 'purchase', 'manufacturing', 'bom', 'inventory', 'audit', 'customers', 'vendors'],
+  [ROLES.BUSINESS_OWNER]: ['users', 'dashboard', 'products', 'sales', 'purchase', 'manufacturing', 'bom', 'inventory', 'audit', 'customers', 'vendors'],
+  [ROLES.SALES_USER]: ['dashboard', 'sales', 'customers'],
+  [ROLES.PURCHASE_USER]: ['dashboard', 'purchase', 'vendors'],
   [ROLES.MANUFACTURING_USER]: ['dashboard', 'manufacturing', 'bom'],
   [ROLES.INVENTORY_MANAGER]: ['dashboard', 'inventory', 'products'],
 };

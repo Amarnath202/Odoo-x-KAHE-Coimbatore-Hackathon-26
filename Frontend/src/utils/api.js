@@ -20,9 +20,18 @@ export function getToken() {
   return _accessToken;
 }
 
+// ─── Token refresh concurrency ──────────────────────────────────────────────────
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+function onRefreshed(token) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
 // ─── Core fetch wrapper ────────────────────────────────────────────────────────
 async function request(path, options = {}) {
-  const token = getToken();
+  let token = getToken();
 
   const headers = {
     'Content-Type': 'application/json',
@@ -33,11 +42,58 @@ async function request(path, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+  let response = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers,
     credentials: 'include', // send cookies for refresh token
   });
+
+  // Handle 401 Unauthorized (Token Expired)
+  if (response.status === 401 && !options._retry && path !== '/auth/login' && path !== '/auth/refresh') {
+    if (isRefreshing) {
+      return new Promise((resolve) => {
+        refreshSubscribers.push((newToken) => {
+          options.headers = options.headers || {};
+          options.headers['Authorization'] = `Bearer ${newToken}`;
+          resolve(request(path, { ...options, _retry: true }));
+        });
+      });
+    }
+
+    options._retry = true;
+    isRefreshing = true;
+
+    try {
+      const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const refreshData = await refreshRes.json();
+
+      if (!refreshRes.ok) throw new Error('Session expired');
+
+      const newToken = refreshData.data?.accessToken || refreshData.accessToken;
+      setToken(newToken);
+      isRefreshing = false;
+      onRefreshed(newToken);
+
+      // Retry original request
+      options.headers['Authorization'] = `Bearer ${newToken}`;
+      response = await fetch(`${BASE_URL}${path}`, {
+        ...options,
+        headers: options.headers,
+        credentials: 'include',
+      });
+    } catch (err) {
+      isRefreshing = false;
+      setToken(null);
+      localStorage.removeItem('erp_user');
+      window.location.href = '/login';
+      throw new Error('Session expired. Please log in again.');
+    }
+  }
 
   // Try to parse JSON regardless of status
   let data = null;
@@ -114,6 +170,8 @@ export const bomsApi = {
 export const customersApi = {
   list: (params) => api.get('/customers', params),
   create: (body) => api.post('/customers', body),
+  update: (id, body) => api.put(`/customers/${id}`, body),
+  delete: (id) => api.delete(`/customers/${id}`),
 };
 
 export const salesApi = {
@@ -129,6 +187,8 @@ export const salesApi = {
 export const vendorsApi = {
   list: (params) => api.get('/vendors', params),
   create: (body) => api.post('/vendors', body),
+  update: (id, body) => api.put(`/vendors/${id}`, body),
+  delete: (id) => api.delete(`/vendors/${id}`),
 };
 
 export const purchaseApi = {

@@ -27,6 +27,10 @@ import Inventory from './pages/inventory/Inventory';
 import StockLedger from './pages/inventory/StockLedger';
 import AuditLogs from './pages/inventory/AuditLogs';
 
+// Others module
+import CustomerList from './pages/customers/CustomerList';
+import VendorList from './pages/vendors/VendorList';
+
 // Sales module (your friend builds these)
 import Sales from './pages/sales/Sales';
 import SalesCreate from './pages/sales/SalesCreate';
@@ -91,6 +95,10 @@ export default function App() {
         <Route path="/manufacturing" element={<ProtectedRoute module="manufacturing"><Manufacturing /></ProtectedRoute>} />
         <Route path="/manufacturing/create" element={<ProtectedRoute module="manufacturing"><ManufacturingCreate /></ProtectedRoute>} />
         <Route path="/manufacturing/:id" element={<ProtectedRoute module="manufacturing"><ManufacturingDetail /></ProtectedRoute>} />
+        
+        {/* Others */}
+        <Route path="/customers" element={<ProtectedRoute module="customers"><CustomerList /></ProtectedRoute>} />
+        <Route path="/vendors" element={<ProtectedRoute module="vendors"><VendorList /></ProtectedRoute>} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
