@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Package, Search, SlidersHorizontal, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Package, Search, SlidersHorizontal, AlertTriangle, TrendingUp, Download } from 'lucide-react';
 import { PageWrapper, EmptyState } from '../../components/UI';
 import { inventoryApi, warehousesApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function Inventory() {
   const { user } = useAuth();
@@ -12,6 +13,8 @@ export default function Inventory() {
   const [warehouseId, setWarehouseId] = useState('');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const toast = useToast();
 
   // Load warehouses once
   useEffect(() => {
@@ -48,10 +51,32 @@ export default function Inventory() {
 
   return (
     <PageWrapper>
-      <div className="page-header">
+      <div className="page-header flex flex-wrap gap-4 items-center justify-between">
         <div>
           <h1 className="page-title">Inventory</h1>
           <p className="page-subtitle">Real-time stock levels across all warehouses</p>
+        </div>
+        <div className="flex flex-wrap gap-3 items-center">
+          {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+            <button 
+              onClick={async () => {
+                try {
+                  setExporting(true);
+                  await inventoryApi.export();
+                  toast('Export downloaded successfully', 'success');
+                } catch (err) {
+                  toast('Export failed', 'error');
+                } finally {
+                  setExporting(false);
+                }
+              }}
+              disabled={exporting}
+              className="btn-secondary whitespace-nowrap"
+            >
+              <Download className="w-4 h-4" />
+              {exporting ? 'Exporting...' : 'Export Excel'}
+            </button>
+          )}
         </div>
       </div>
 

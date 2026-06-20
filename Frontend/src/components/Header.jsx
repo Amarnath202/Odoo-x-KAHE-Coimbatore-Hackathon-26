@@ -1,6 +1,6 @@
-import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { Bell, Search, ChevronRight, Menu } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { Bell, Search, ChevronRight, Menu, LogOut, User as UserIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const BREADCRUMB_MAP = {
@@ -20,8 +20,26 @@ const BREADCRUMB_MAP = {
 };
 
 export default function Header({ setIsMobileMenuOpen }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [profileRef]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const crumbs = (() => {
     // exact match
@@ -77,14 +95,39 @@ export default function Header({ setIsMobileMenuOpen }) {
         </button>
 
         {/* User Avatar */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-sm font-bold text-white shadow-glow">
-            {user?.name?.[0]?.toUpperCase() || 'U'}
-          </div>
-          <div className="hidden md:block">
-            <p className="text-xs font-semibold text-text-primary leading-tight">{user?.name}</p>
-            <p className="text-[10px] text-text-muted">{user?.role}</p>
-          </div>
+        <div className="relative" ref={profileRef}>
+          <button 
+            className="flex items-center gap-2 hover:bg-bg-light/50 p-1.5 rounded-btn transition-colors text-left"
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-sm font-bold text-white shadow-glow shrink-0">
+              {user?.name?.[0]?.toUpperCase() || 'U'}
+            </div>
+            <div className="hidden md:block">
+              <p className="text-xs font-semibold text-text-primary leading-tight">{user?.name}</p>
+              <p className="text-[10px] text-text-muted">{user?.role}</p>
+            </div>
+          </button>
+
+          {isProfileOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-bg-surface border border-border rounded-xl shadow-xl py-1 z-50">
+              <Link 
+                to="/profile" 
+                className="flex items-center gap-2 px-4 py-2 text-sm text-text-primary hover:bg-bg-light transition-colors"
+                onClick={() => setIsProfileOpen(false)}
+              >
+                <UserIcon className="w-4 h-4" />
+                Profile
+              </Link>
+              <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:bg-danger/10 w-full text-left transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

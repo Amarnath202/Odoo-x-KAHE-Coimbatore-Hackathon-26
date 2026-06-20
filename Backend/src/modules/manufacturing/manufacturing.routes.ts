@@ -116,4 +116,21 @@ router.post('/:id/start', authorize(...mfgRoles), validate(idParamSchema, 'param
  */
 router.post('/:id/complete', authorize(...mfgRoles), validate(idParamSchema, 'params'), asyncHandler(manufacturingController.complete.bind(manufacturingController)));
 
+/**
+ * @swagger
+ * /manufacturing-orders/{id}:
+ *   delete:
+ *     tags: [Manufacturing]
+ *     summary: Delete a manufacturing order
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Order deleted
+ */
+router.delete('/:id', authorize(Role.ADMIN, Role.BUSINESS_OWNER), validate(idParamSchema, 'params'), asyncHandler(manufacturingController.deleteOrder.bind(manufacturingController)));
+
 export default router;

@@ -48,6 +48,22 @@ export class ProductsRepository {
     return { data, total };
   }
 
+  async findForExport(companyId?: string) {
+    return prisma.product.findMany({
+      where: {
+        deletedAt: null,
+        ...(companyId && { companyId }),
+      },
+      include: {
+        ...PRODUCT_INCLUDE,
+        inventory: {
+          select: { onHandQty: true },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   async findById(id: string) {
     return prisma.product.findFirst({
       where: { id, deletedAt: null },
@@ -102,10 +118,13 @@ export class ProductsRepository {
   }
 
   async softDelete(id: string) {
-    return prisma.product.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    return prisma.$transaction([
+      prisma.inventory.deleteMany({ where: { productId: id } }),
+      prisma.product.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      }),
+    ]);
   }
 }
 

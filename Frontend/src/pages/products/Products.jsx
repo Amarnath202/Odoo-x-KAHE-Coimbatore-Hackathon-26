@@ -1,15 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Eye, Edit, SlidersHorizontal, Tag } from 'lucide-react';
+import { Search, Plus, Eye, Edit, SlidersHorizontal, Tag, Trash2, Download } from 'lucide-react';
 import PageWrapper from '../../components/UI';
 import { formatINR } from '../../components/UI';
 import { productsApi } from '../../utils/api';
+import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Products() {
+  const { user } = useAuth();
+  const toast = useToast();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [strategyFilter, setStrategyFilter] = useState('All');
+  const [exporting, setExporting] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -32,17 +37,51 @@ export default function Products() {
     return () => clearTimeout(timer);
   }, [fetchProducts]);
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await productsApi.delete(id);
+      toast('Product deleted successfully', 'success');
+      fetchProducts();
+    } catch (err) {
+      console.error(err);
+      toast(err.message || 'Failed to delete product', 'error');
+    }
+  };
+
   return (
     <PageWrapper>
-      <div className="page-header">
+      <div className="page-header flex flex-wrap gap-4 items-center justify-between">
         <div>
           <h1 className="page-title">Products</h1>
           <p className="page-subtitle">Manage inventory items, pricing, and procurement strategies.</p>
         </div>
-        <Link to="/products/create" className="btn-primary btn-sm flex items-center gap-1.5">
-          <Plus className="w-4 h-4" />
-          Create Product
-        </Link>
+        <div className="flex flex-wrap gap-3 items-center">
+          {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+            <button 
+              onClick={async () => {
+                try {
+                  setExporting(true);
+                  await productsApi.export();
+                  toast('Export downloaded successfully', 'success');
+                } catch (err) {
+                  toast('Export failed', 'error');
+                } finally {
+                  setExporting(false);
+                }
+              }}
+              disabled={exporting}
+              className="btn-secondary whitespace-nowrap"
+            >
+              <Download className="w-4 h-4" />
+              {exporting ? 'Exporting...' : 'Export Excel'}
+            </button>
+          )}
+          <Link to="/products/create" className="btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap">
+            <Plus className="w-4 h-4" />
+            Create Product
+          </Link>
+        </div>
       </div>
 
       {/* Controls */}
@@ -142,8 +181,14 @@ export default function Products() {
                           className="p-1 text-text-secondary hover:text-accent transition-colors tooltip"
                         >
                           <Edit className="w-4 h-4" />
-                          <span className="tooltip-content">Edit Product</span>
+                          <span className="tooltip-content">Edit</span>
                         </Link>
+                        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+                          <button onClick={() => handleDelete(p.id)} className="p-1 text-text-secondary hover:text-danger transition-colors tooltip">
+                            <Trash2 className="w-4 h-4" />
+                            <span className="tooltip-content">Delete</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

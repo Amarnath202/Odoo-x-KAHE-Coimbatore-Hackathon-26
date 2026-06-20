@@ -69,6 +69,21 @@ export class InventoryRepository {
     return { data, total };
   }
 
+  async findForExport(companyId?: string) {
+    const where: Prisma.InventoryWhereInput = {
+      ...(companyId && { warehouse: { companyId } }),
+    };
+
+    return prisma.inventory.findMany({
+      where,
+      include: {
+        product: { select: { id: true, sku: true, name: true, unit: { select: { symbol: true } } } },
+        warehouse: { select: { id: true, name: true, location: true } },
+      },
+      orderBy: { product: { name: 'asc' } },
+    });
+  }
+
   /**
    * Update inventory quantities and recalculate freeToUseQty
    * freeToUseQty = onHandQty - reservedQty

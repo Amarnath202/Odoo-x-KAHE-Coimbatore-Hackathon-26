@@ -200,6 +200,16 @@ export class ManufacturingService {
 
     return manufacturingRepository.findById(orderId);
   }
+
+  /**
+   * DELETE Manufacturing Order:
+   * Hard delete from DB. Work orders cascade.
+   */
+  async deleteOrder(orderId: string) {
+    const order = await manufacturingRepository.findById(orderId);
+    if (!order) throw AppError.notFound(MESSAGES.MANUFACTURING.ORDER_NOT_FOUND);
+    return prisma.manufacturingOrder.delete({ where: { id: orderId } });
+  }
 }
 
 export const manufacturingService = new ManufacturingService();

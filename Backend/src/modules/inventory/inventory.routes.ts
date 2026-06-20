@@ -46,6 +46,8 @@ router.get(
   asyncHandler(inventoryController.list.bind(inventoryController)),
 );
 
+router.get('/export', authorize(Role.ADMIN, Role.BUSINESS_OWNER), asyncHandler(inventoryController.exportExcel.bind(inventoryController)));
+
 /**
  * @swagger
  * /inventory/{warehouseId}/{productId}:

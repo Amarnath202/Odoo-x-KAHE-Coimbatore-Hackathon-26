@@ -44,6 +44,7 @@ const ALL_NAV = [
       { label: 'Customer Management', to: '/customers', icon: Users, module: 'customers' },
       { label: 'Vendor Management', to: '/vendors', icon: Users, module: 'vendors' },
       { label: 'User Management', to: '/users', icon: Users, module: 'users' },
+      { label: 'Password Requests', to: '/admin/password-requests', icon: Users, module: 'users' },
     ],
   },
 ];
@@ -120,7 +121,7 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
 
       {/* User Footer */}
       <div className="px-3 py-4 border-t border-border">
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-btn bg-bg-light/50 mb-2">
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-btn bg-bg-light/50">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xs font-bold text-white shrink-0">
             {user?.name?.[0]?.toUpperCase() || 'U'}
           </div>
@@ -131,13 +132,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
             </p>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="nav-link w-full text-danger hover:bg-danger/10 hover:text-danger"
-        >
-          <LogOut className="w-4 h-4 shrink-0" />
-          <span>Logout</span>
-        </button>
       </div>
     </aside>
   );

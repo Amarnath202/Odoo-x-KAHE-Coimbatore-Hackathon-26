@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Search, Eye, Edit, Layers, Package } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Layers, Package, Trash2 } from 'lucide-react';
 import { PageWrapper, EmptyState } from '../../components/UI';
 import { bomsApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function BomList() {
+  const toast = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [boms, setBoms] = useState([]);
@@ -25,6 +27,17 @@ export default function BomList() {
   }, [search, user?.companyId]);
 
   useEffect(() => { const t = setTimeout(fetchBoms, 300); return () => clearTimeout(t); }, [fetchBoms]);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this BoM?')) return;
+    try {
+      await bomsApi.delete(id);
+      toast('BoM deleted successfully', 'success');
+      fetchBoms();
+    } catch (err) {
+      toast(err.message || 'Failed to delete BoM', 'error');
+    }
+  };
 
   return (
     <PageWrapper>
@@ -111,6 +124,12 @@ export default function BomList() {
                           <Edit className="w-4 h-4" />
                           <span className="tooltip-content">Edit</span>
                         </Link>
+                        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+                          <button onClick={() => handleDelete(bom.id)} className="p-1 text-text-secondary hover:text-danger transition-colors tooltip">
+                            <Trash2 className="w-4 h-4" />
+                            <span className="tooltip-content">Delete</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

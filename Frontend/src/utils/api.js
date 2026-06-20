@@ -138,6 +138,42 @@ export const api = {
 
   delete: (path) =>
     request(path, { method: 'DELETE' }),
+
+  download: async (path, params) => {
+    let token = getToken();
+    const url = params
+      ? `${path}?${new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '')).toString()}`
+      : path;
+
+    const response = await fetch(`${BASE_URL}${url}`, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    // Try to get filename from content-disposition
+    const disposition = response.headers.get('Content-Disposition');
+    let filename = 'download.xlsx';
+    if (disposition && disposition.indexOf('attachment') !== -1) {
+      const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+      if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['"]/g, '');
+      }
+    }
+
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  },
 };
 
 // ─── Auth helpers ──────────────────────────────────────────────────────────────
@@ -159,6 +195,7 @@ export const productsApi = {
   create: (body) => api.post('/products', body),
   update: (id, body) => api.put(`/products/${id}`, body),
   delete: (id) => api.delete(`/products/${id}`),
+  export: (params) => api.download('/products/export', params),
 };
 
 // ─── BOM ───────────────────────────────────────────────────────────────────────
@@ -185,6 +222,8 @@ export const salesApi = {
   confirm: (id, body) => api.post(`/sales-orders/${id}/confirm`, body),
   deliver: (id, body) => api.post(`/sales-orders/${id}/deliver`, body),
   cancel: (id, body) => api.post(`/sales-orders/${id}/cancel`, body || {}),
+  delete: (id) => api.delete(`/sales-orders/${id}`),
+  export: (params) => api.download('/sales-orders/export', params),
 };
 
 // ─── Purchase ──────────────────────────────────────────────────────────────────
@@ -201,6 +240,8 @@ export const purchaseApi = {
   create: (body) => api.post('/purchase-orders', body),
   confirm: (id) => api.post(`/purchase-orders/${id}/confirm`, {}),
   receive: (id, body) => api.post(`/purchase-orders/${id}/receive`, body),
+  delete: (id) => api.delete(`/purchase-orders/${id}`),
+  export: (params) => api.download('/purchase-orders/export', params),
 };
 
 // ─── Manufacturing ─────────────────────────────────────────────────────────────
@@ -211,12 +252,14 @@ export const manufacturingApi = {
   confirm: (id) => api.post(`/manufacturing-orders/${id}/confirm`, {}),
   start: (id) => api.post(`/manufacturing-orders/${id}/start`, {}),
   complete: (id) => api.post(`/manufacturing-orders/${id}/complete`, {}),
+  delete: (id) => api.delete(`/manufacturing-orders/${id}`),
 };
 
 // ─── Inventory ─────────────────────────────────────────────────────────────────
 export const inventoryApi = {
   list: (params) => api.get('/inventory', params),
   adjust: (body) => api.post('/inventory/adjust', body),
+  export: (params) => api.download('/inventory/export', params),
 };
 
 // ─── Stock Ledger ──────────────────────────────────────────────────────────────
@@ -227,6 +270,7 @@ export const stockLedgerApi = {
 // ─── Audit Logs ────────────────────────────────────────────────────────────────
 export const auditLogsApi = {
   list: (params) => api.get('/audit-logs', params),
+  export: (params) => api.download('/audit-logs/export', params),
 };
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
@@ -255,4 +299,14 @@ export const usersApi = {
   create: (body) => api.post('/users', body),
   update: (id, body) => api.put(`/users/${id}`, body),
   delete: (id) => api.delete(`/users/${id}`),
+};
+
+// ─── Password Change ───────────────────────────────────────────────────────────
+export const passwordChangeApi = {
+  request: (body) => api.post('/password-change/request', body),
+  myRequests: () => api.get('/password-change/my-requests'),
+  reset: (body) => api.post('/password-change/reset', body),
+  adminGetAll: () => api.get('/admin/password-change-requests'),
+  adminApprove: (id) => api.put(`/admin/password-change-requests/${id}/approve`, {}),
+  adminReject: (id) => api.put(`/admin/password-change-requests/${id}/reject`, {}),
 };

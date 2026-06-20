@@ -11,6 +11,8 @@ import {
   DeliverSalesOrderDto,
   SalesOrderQueryDto,
 } from './sales.validator';
+import ExcelJS from 'exceljs';
+import dayjs from 'dayjs';
 
 export class SalesController {
   // ─── Customers ─────────────────────────────────────────────
@@ -84,6 +86,61 @@ export class SalesController {
       warehouseId,
     );
     sendSuccess(res, order, MESSAGES.SALES.CANCELLED);
+  }
+
+  async deleteOrder(req: Request, res: Response): Promise<void> {
+    await salesService.deleteOrder(req.params['id']!);
+    sendSuccess(res, null, 'Sales order deleted successfully');
+  }
+
+  async exportExcel(req: Request, res: Response): Promise<void> {
+    const month = req.query.month ? parseInt(req.query.month as string, 10) : undefined;
+    const year = req.query.year ? parseInt(req.query.year as string, 10) : undefined;
+    const companyId = req.user?.companyId;
+
+    const orders = await salesService.getExportData(companyId, month, year);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Sales Orders');
+
+    worksheet.columns = [
+      { header: 'Sales ID', key: 'id', width: 36 },
+      { header: 'Customer Name', key: 'customerName', width: 25 },
+      { header: 'Product Name', key: 'productName', width: 30 },
+      { header: 'Quantity', key: 'quantity', width: 10 },
+      { header: 'Unit Price', key: 'unitPrice', width: 15 },
+      { header: 'Total Amount', key: 'totalAmount', width: 15 },
+      { header: 'Sales Date', key: 'salesDate', width: 20 },
+      { header: 'Status', key: 'status', width: 15 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true };
+
+    for (const order of orders) {
+      for (const item of order.items) {
+        worksheet.addRow({
+          id: order.id,
+          customerName: order.customer.name,
+          productName: item.product.name,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+          totalAmount: Number(item.quantity) * Number(item.unitPrice),
+          salesDate: dayjs(order.createdAt).format('YYYY-MM-DD HH:mm'),
+          status: order.status,
+        });
+      }
+    }
+
+    let fileName = 'sales.xlsx';
+    if (month && year) {
+      fileName = `sales_${dayjs().month(month - 1).format('MMMM').toLowerCase()}_${year}.xlsx`;
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+
+    await workbook.xlsx.write(res);
+    res.end();
   }
 }
 

@@ -71,7 +71,7 @@ router.get('/customers', authorize(...salesRoles), asyncHandler(salesController.
  */
 router.post('/customers', authorize(...salesRoles), validate(createCustomerSchema), asyncHandler(salesController.createCustomer.bind(salesController)));
 router.put('/customers/:id', authorize(...salesRoles), validate(idParamSchema, 'params'), validate(updateCustomerSchema), asyncHandler(salesController.updateCustomer.bind(salesController)));
-router.delete('/customers/:id', authorize(Role.ADMIN, Role.SALES_USER), validate(idParamSchema, 'params'), asyncHandler(salesController.deleteCustomer.bind(salesController)));
+router.delete('/customers/:id', authorize(Role.ADMIN, Role.BUSINESS_OWNER), validate(idParamSchema, 'params'), asyncHandler(salesController.deleteCustomer.bind(salesController)));
 
 // ─── Sales Order Routes ──────────────────────────────────────
 
@@ -93,6 +93,7 @@ router.delete('/customers/:id', authorize(Role.ADMIN, Role.SALES_USER), validate
  *         description: Paginated sales order list
  */
 router.get('/sales-orders', authorize(...salesRoles), validate(salesOrderQuerySchema, 'query'), asyncHandler(salesController.listOrders.bind(salesController)));
+router.get('/sales-orders/export', authorize(Role.ADMIN, Role.BUSINESS_OWNER), asyncHandler(salesController.exportExcel.bind(salesController)));
 router.get('/sales-orders/:id', authorize(...salesRoles), validate(idParamSchema, 'params'), asyncHandler(salesController.getOrderById.bind(salesController)));
 
 /**
@@ -186,5 +187,22 @@ router.post('/sales-orders/:id/deliver', authorize(...deliverRoles), validate(id
  *         description: Order cancelled, reservations released
  */
 router.post('/sales-orders/:id/cancel', authorize(...salesRoles), validate(idParamSchema, 'params'), asyncHandler(salesController.cancelOrder.bind(salesController)));
+
+/**
+ * @swagger
+ * /sales-orders/{id}:
+ *   delete:
+ *     tags: [Sales]
+ *     summary: Delete a sales order
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Order deleted
+ */
+router.delete('/sales-orders/:id', authorize(Role.ADMIN, Role.BUSINESS_OWNER), validate(idParamSchema, 'params'), asyncHandler(salesController.deleteOrder.bind(salesController)));
 
 export default router;

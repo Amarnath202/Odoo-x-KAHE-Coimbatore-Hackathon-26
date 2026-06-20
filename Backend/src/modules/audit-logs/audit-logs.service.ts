@@ -15,6 +15,10 @@ export class AuditLogsService {
   async list(query: AuditLogQuery) {
     return auditLogsRepository.findMany(query);
   }
+
+  async getExportData(companyId?: string, month?: number, year?: number) {
+    return auditLogsRepository.findForExport(companyId, month, year);
+  }
 }
 
 export const auditLogsService = new AuditLogsService();

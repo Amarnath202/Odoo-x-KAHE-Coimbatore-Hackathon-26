@@ -47,6 +47,11 @@ export class ManufacturingController {
     );
     sendSuccess(res, order, MESSAGES.MANUFACTURING.COMPLETE_SUCCESS);
   }
+
+  async deleteOrder(req: Request, res: Response): Promise<void> {
+    await manufacturingService.deleteOrder(req.params['id']!);
+    sendSuccess(res, null, 'Manufacturing order deleted successfully');
+  }
 }
 
 export const manufacturingController = new ManufacturingController();

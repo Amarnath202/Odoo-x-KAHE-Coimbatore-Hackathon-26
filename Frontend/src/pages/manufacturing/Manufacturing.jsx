@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Factory, Plus, Search, Eye, TrendingUp, Clock, CheckCircle, Package } from 'lucide-react';
+import { Wrench, Plus, Search, Eye, TrendingUp, Clock, CheckCircle, Play, Package, Trash2 } from 'lucide-react';
 import { PageWrapper, EmptyState, formatDate } from '../../components/UI';
 import StatusBadge from '../../components/StatusBadge';
 import { manufacturingApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 const FILTER_TABS = [
   { label: 'All',         value: '' },
@@ -23,6 +24,7 @@ function labelStatus(s) {
 
 export default function Manufacturing() {
   const { user } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const [filter, setFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -42,6 +44,17 @@ export default function Manufacturing() {
   }, [filter, search, user?.companyId]);
 
   useEffect(() => { const t = setTimeout(fetchOrders, 300); return () => clearTimeout(t); }, [fetchOrders]);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this manufacturing order?')) return;
+    try {
+      await manufacturingApi.delete(id);
+      toast('Manufacturing order deleted successfully', 'success');
+      fetchOrders();
+    } catch (err) {
+      toast(err.message || 'Failed to delete manufacturing order', 'error');
+    }
+  };
 
   const kpi = {
     total: orders.length,
@@ -64,7 +77,7 @@ export default function Manufacturing() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Total Orders', value: kpi.total,      icon: Factory,      color: 'bg-primary/10 text-primary' },
+          { label: 'Total Orders', value: kpi.total,      icon: Wrench,       color: 'bg-primary/10 text-primary' },
           { label: 'Confirmed',    value: kpi.confirmed,  icon: CheckCircle,  color: 'bg-accent/10 text-accent' },
           { label: 'In Progress',  value: kpi.inProgress, icon: Clock,        color: 'bg-warning/10 text-warning' },
           { label: 'Completed',    value: kpi.done,       icon: TrendingUp,   color: 'bg-success/10 text-success' },
@@ -140,9 +153,16 @@ export default function Manufacturing() {
                       ) : '—'}
                     </td>
                     <td className="text-center" onClick={e => e.stopPropagation()}>
-                      <Link to={`/manufacturing/${order.id}`} className="btn-ghost btn-icon btn-sm">
-                        <Eye className="w-4 h-4" />
-                      </Link>
+                      <div className="flex items-center justify-center gap-1">
+                        <Link to={`/manufacturing/${order.id}`} className="btn-ghost btn-icon btn-sm" title="View">
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+                          <button onClick={() => handleDelete(order.id)} className="btn-ghost btn-icon btn-sm hover:text-danger" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </motion.tr>
                 ))
