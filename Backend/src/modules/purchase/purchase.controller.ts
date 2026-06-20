@@ -56,6 +56,11 @@ export class PurchaseController {
     const order = await purchaseService.receiveOrder(req.params['id']!, req.body as ReceivePurchaseOrderDto, req.user!.id, req.user!.companyId);
     sendSuccess(res, order, MESSAGES.PURCHASE.RECEIVE_SUCCESS);
   }
+
+  async deleteOrder(req: Request, res: Response): Promise<void> {
+    await purchaseService.deleteOrder(req.params['id']!);
+    sendSuccess(res, null, 'Purchase order deleted successfully');
+  }
 }
 
 export const purchaseController = new PurchaseController();

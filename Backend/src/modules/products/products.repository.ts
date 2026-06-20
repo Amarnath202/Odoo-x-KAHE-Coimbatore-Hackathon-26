@@ -102,10 +102,13 @@ export class ProductsRepository {
   }
 
   async softDelete(id: string) {
-    return prisma.product.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    return prisma.$transaction([
+      prisma.inventory.deleteMany({ where: { productId: id } }),
+      prisma.product.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      }),
+    ]);
   }
 }
 

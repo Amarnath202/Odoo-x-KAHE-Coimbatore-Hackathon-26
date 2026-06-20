@@ -294,6 +294,16 @@ export class SalesService {
 
     return salesRepository.findOrderById(orderId);
   }
+
+  /**
+   * DELETE Sales Order:
+   * Hard delete from DB. Items cascade.
+   */
+  async deleteOrder(orderId: string) {
+    const order = await salesRepository.findOrderById(orderId);
+    if (!order) throw AppError.notFound(MESSAGES.SALES.ORDER_NOT_FOUND);
+    return prisma.salesOrder.delete({ where: { id: orderId } });
+  }
 }
 
 export const salesService = new SalesService();

@@ -38,7 +38,7 @@ const purchaseRoles = [Role.ADMIN, Role.BUSINESS_OWNER, Role.PURCHASE_USER, Role
 router.get('/vendors', authorize(...purchaseRoles), asyncHandler(purchaseController.listVendors.bind(purchaseController)));
 router.post('/vendors', authorize(...purchaseRoles), validate(createVendorSchema), asyncHandler(purchaseController.createVendor.bind(purchaseController)));
 router.put('/vendors/:id', authorize(...purchaseRoles), validate(idParamSchema, 'params'), validate(updateVendorSchema), asyncHandler(purchaseController.updateVendor.bind(purchaseController)));
-router.delete('/vendors/:id', authorize(Role.ADMIN, Role.PURCHASE_USER), validate(idParamSchema, 'params'), asyncHandler(purchaseController.deleteVendor.bind(purchaseController)));
+router.delete('/vendors/:id', authorize(Role.ADMIN, Role.BUSINESS_OWNER), validate(idParamSchema, 'params'), asyncHandler(purchaseController.deleteVendor.bind(purchaseController)));
 
 // ─── Purchase Order Routes ───────────────────────────────────
 
@@ -142,5 +142,22 @@ router.post('/purchase-orders/:id/confirm', authorize(...purchaseRoles), validat
  *         description: Goods received, inventory updated
  */
 router.post('/purchase-orders/:id/receive', authorize(...purchaseRoles), validate(idParamSchema, 'params'), validate(receivePurchaseOrderSchema), asyncHandler(purchaseController.receiveOrder.bind(purchaseController)));
+
+/**
+ * @swagger
+ * /purchase-orders/{id}:
+ *   delete:
+ *     tags: [Purchase]
+ *     summary: Delete a purchase order
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Order deleted
+ */
+router.delete('/purchase-orders/:id', authorize(Role.ADMIN, Role.BUSINESS_OWNER), validate(idParamSchema, 'params'), asyncHandler(purchaseController.deleteOrder.bind(purchaseController)));
 
 export default router;

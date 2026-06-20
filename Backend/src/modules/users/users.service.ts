@@ -57,7 +57,7 @@ export class UsersService {
       throw AppError.notFound(MESSAGES.USERS.NOT_FOUND);
     }
 
-    await usersRepository.softDelete(id);
+    await usersRepository.delete(id);
   }
 }
 

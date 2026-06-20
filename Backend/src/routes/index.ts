@@ -28,6 +28,11 @@ router.use('/auth', authRoutes);
 // User management
 router.use('/users', userRoutes);
 
+// Password Change
+import { userPasswordChangeRoutes, adminPasswordChangeRoutes } from '../modules/password-change/password-change.routes';
+router.use('/password-change', userPasswordChangeRoutes);
+router.use('/admin/password-change-requests', adminPasswordChangeRoutes);
+
 // Master data
 router.use('/companies', companyRoutes);
 router.use('/warehouses', warehouseRoutes);

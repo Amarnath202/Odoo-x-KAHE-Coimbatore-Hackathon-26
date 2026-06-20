@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Eye, Edit, SlidersHorizontal, Tag } from 'lucide-react';
+import { Search, Plus, Eye, Edit, SlidersHorizontal, Tag, Trash2 } from 'lucide-react';
 import PageWrapper from '../../components/UI';
 import { formatINR } from '../../components/UI';
 import { productsApi } from '../../utils/api';
+import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Products() {
+  const { user } = useAuth();
+  const toast = useToast();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +35,18 @@ export default function Products() {
     const timer = setTimeout(fetchProducts, 300);
     return () => clearTimeout(timer);
   }, [fetchProducts]);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await productsApi.delete(id);
+      toast('Product deleted successfully', 'success');
+      fetchProducts();
+    } catch (err) {
+      console.error(err);
+      toast(err.message || 'Failed to delete product', 'error');
+    }
+  };
 
   return (
     <PageWrapper>
@@ -142,8 +158,14 @@ export default function Products() {
                           className="p-1 text-text-secondary hover:text-accent transition-colors tooltip"
                         >
                           <Edit className="w-4 h-4" />
-                          <span className="tooltip-content">Edit Product</span>
+                          <span className="tooltip-content">Edit</span>
                         </Link>
+                        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+                          <button onClick={() => handleDelete(p.id)} className="p-1 text-text-secondary hover:text-danger transition-colors tooltip">
+                            <Trash2 className="w-4 h-4" />
+                            <span className="tooltip-content">Delete</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

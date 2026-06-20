@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Truck, Plus, Search, Eye, TrendingUp, Clock, CheckCircle, XCircle, Package } from 'lucide-react';
+import { Truck, Plus, Search, Eye, TrendingUp, Clock, CheckCircle, XCircle, Package, Trash2 } from 'lucide-react';
 import { PageWrapper, EmptyState, formatINR, formatDate } from '../../components/UI';
 import StatusBadge from '../../components/StatusBadge';
 import { purchaseApi } from '../../utils/api';
@@ -44,6 +44,17 @@ export default function Purchase() {
   }, [filter, search, user?.companyId]);
 
   useEffect(() => { const t = setTimeout(fetchOrders, 300); return () => clearTimeout(t); }, [fetchOrders]);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this purchase order?')) return;
+    try {
+      await purchaseApi.delete(id);
+      toast('Purchase order deleted successfully', 'success');
+      fetchOrders();
+    } catch (err) {
+      toast(err.message || 'Failed to delete purchase order', 'error');
+    }
+  };
 
   const kpi = {
     total: orders.length,
@@ -134,9 +145,16 @@ export default function Purchase() {
                     <td className="text-text-muted text-sm">{order.items?.length ?? 0} item(s)</td>
                     <td className="text-right font-semibold text-text-primary">{formatINR(order.totalAmount ?? 0)}</td>
                     <td className="text-center" onClick={e => e.stopPropagation()}>
-                      <Link to={`/purchase/${order.id}`} className="btn-ghost btn-icon btn-sm" title="View">
-                        <Eye className="w-4 h-4" />
-                      </Link>
+                      <div className="flex items-center justify-center gap-1">
+                        <Link to={`/purchase/${order.id}`} className="btn-ghost btn-icon btn-sm" title="View">
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+                          <button onClick={() => handleDelete(order.id)} className="btn-ghost btn-icon btn-sm hover:text-danger" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </motion.tr>
                 ))

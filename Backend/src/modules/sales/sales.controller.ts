@@ -85,6 +85,11 @@ export class SalesController {
     );
     sendSuccess(res, order, MESSAGES.SALES.CANCELLED);
   }
+
+  async deleteOrder(req: Request, res: Response): Promise<void> {
+    await salesService.deleteOrder(req.params['id']!);
+    sendSuccess(res, null, 'Sales order deleted successfully');
+  }
 }
 
 export const salesController = new SalesController();

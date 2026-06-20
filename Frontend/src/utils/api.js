@@ -185,6 +185,7 @@ export const salesApi = {
   confirm: (id, body) => api.post(`/sales-orders/${id}/confirm`, body),
   deliver: (id, body) => api.post(`/sales-orders/${id}/deliver`, body),
   cancel: (id, body) => api.post(`/sales-orders/${id}/cancel`, body || {}),
+  delete: (id) => api.delete(`/sales-orders/${id}`),
 };
 
 // ─── Purchase ──────────────────────────────────────────────────────────────────
@@ -201,6 +202,7 @@ export const purchaseApi = {
   create: (body) => api.post('/purchase-orders', body),
   confirm: (id) => api.post(`/purchase-orders/${id}/confirm`, {}),
   receive: (id, body) => api.post(`/purchase-orders/${id}/receive`, body),
+  delete: (id) => api.delete(`/purchase-orders/${id}`),
 };
 
 // ─── Manufacturing ─────────────────────────────────────────────────────────────
@@ -211,6 +213,7 @@ export const manufacturingApi = {
   confirm: (id) => api.post(`/manufacturing-orders/${id}/confirm`, {}),
   start: (id) => api.post(`/manufacturing-orders/${id}/start`, {}),
   complete: (id) => api.post(`/manufacturing-orders/${id}/complete`, {}),
+  delete: (id) => api.delete(`/manufacturing-orders/${id}`),
 };
 
 // ─── Inventory ─────────────────────────────────────────────────────────────────
@@ -255,4 +258,14 @@ export const usersApi = {
   create: (body) => api.post('/users', body),
   update: (id, body) => api.put(`/users/${id}`, body),
   delete: (id) => api.delete(`/users/${id}`),
+};
+
+// ─── Password Change ───────────────────────────────────────────────────────────
+export const passwordChangeApi = {
+  request: (body) => api.post('/password-change/request', body),
+  myRequests: () => api.get('/password-change/my-requests'),
+  reset: (body) => api.post('/password-change/reset', body),
+  adminGetAll: () => api.get('/admin/password-change-requests'),
+  adminApprove: (id) => api.put(`/admin/password-change-requests/${id}/approve`, {}),
+  adminReject: (id) => api.put(`/admin/password-change-requests/${id}/reject`, {}),
 };

@@ -168,10 +168,12 @@ export default function VendorList() {
                           <Edit className="w-4 h-4" />
                           <span className="tooltip-content">Edit</span>
                         </button>
-                        <button onClick={() => handleDelete(v.id)} className="p-1 text-text-secondary hover:text-danger transition-colors tooltip">
-                          <Trash2 className="w-4 h-4" />
-                          <span className="tooltip-content">Delete</span>
-                        </button>
+                        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+                          <button onClick={() => handleDelete(v.id)} className="p-1 text-text-secondary hover:text-danger transition-colors tooltip">
+                            <Trash2 className="w-4 h-4" />
+                            <span className="tooltip-content">Delete</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

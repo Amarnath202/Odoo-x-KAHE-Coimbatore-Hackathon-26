@@ -69,12 +69,12 @@ export default function Sales() {
 
   const handleDelete = async (id) => {
     try {
-      await salesApi.cancel(id);
-      toast(`Order cancelled`, 'warning');
+      await salesApi.delete(id);
+      toast(`Order deleted`, 'success');
       setDeleteId(null);
       fetchOrders();
     } catch (err) {
-      toast(err.message || 'Failed to cancel order', 'error');
+      toast(err.message || 'Failed to delete order', 'error');
     }
   };
 
@@ -179,8 +179,8 @@ export default function Sales() {
                         <Link to={`/sales/${order.id}`} className="btn-ghost btn-icon btn-sm tooltip" title="View Details">
                           <Eye className="w-4 h-4" />
                         </Link>
-                        {order.status === 'DRAFT' && (
-                          <button onClick={() => setDeleteId(order.id)} className="btn-danger btn-icon btn-sm" title="Cancel">
+                        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+                          <button onClick={() => setDeleteId(order.id)} className="btn-ghost btn-icon btn-sm hover:text-danger" title="Cancel/Delete">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         )}
@@ -202,17 +202,17 @@ export default function Sales() {
             <motion.div className="modal" initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
               <div className="modal-header">
-                <h2 className="text-base font-semibold text-text-primary">Cancel Sales Order</h2>
+                <h2 className="text-base font-semibold text-text-primary">Delete Sales Order</h2>
                 <button onClick={() => setDeleteId(null)} className="btn-ghost btn-icon"><XCircle className="w-4 h-4" /></button>
               </div>
               <div className="modal-body">
                 <p className="text-sm text-text-secondary">
-                  Are you sure you want to cancel <span className="font-semibold text-primary">{deleteId}</span>?
+                  Are you sure you want to delete <span className="font-semibold text-primary">{deleteId}</span>?
                 </p>
               </div>
               <div className="modal-footer">
                 <button onClick={() => setDeleteId(null)} className="btn-secondary">Back</button>
-                <button onClick={() => handleDelete(deleteId)} className="btn-danger">Cancel Order</button>
+                <button onClick={() => handleDelete(deleteId)} className="btn-danger">Delete Order</button>
               </div>
             </motion.div>
           </motion.div>

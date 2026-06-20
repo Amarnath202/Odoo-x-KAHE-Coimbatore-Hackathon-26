@@ -5,7 +5,10 @@ import PageWrapper from '../../components/UI';
 import { usersApi } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 
+import { useAuth } from '../../context/AuthContext';
+
 export default function Users() {
+  const { user } = useAuth();
   const toast = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,9 +141,8 @@ export default function Users() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
-                        u.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${u.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
                         {u.isActive !== false ? 'Active' : 'Inactive'}
                       </span>
                     </td>
@@ -153,13 +155,15 @@ export default function Users() {
                           <Edit className="w-4 h-4" />
                           <span className="tooltip-content">Edit User</span>
                         </Link>
-                        <button
-                          onClick={() => handleDelete(u.id)}
-                          className="p-1 text-text-secondary hover:text-danger transition-colors tooltip"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span className="tooltip-content">Delete User</span>
-                        </button>
+                        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+                          <button
+                            onClick={() => handleDelete(u.id)}
+                            className="p-1 text-text-secondary hover:text-danger transition-colors tooltip"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="tooltip-content">Delete User</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

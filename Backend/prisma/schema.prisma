@@ -82,6 +82,13 @@ enum AuditAction {
   ADJUST
 }
 
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
 // ============================================================
 // TABLE 1: companies
 // ============================================================
@@ -127,9 +134,10 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  company       Company        @relation(fields: [companyId], references: [id])
-  refreshTokens RefreshToken[]
-  auditLogs     AuditLog[]
+  company                Company                 @relation(fields: [companyId], references: [id])
+  refreshTokens          RefreshToken[]
+  auditLogs              AuditLog[]
+  passwordChangeRequests PasswordChangeRequest[]
 
   @@map("users")
 }
@@ -550,4 +558,21 @@ model ProcurementLog {
   product Product @relation(fields: [productId], references: [id])
 
   @@map("procurement_logs")
+}
+
+// ============================================================
+// TABLE 23: password_change_requests
+// ============================================================
+
+model PasswordChangeRequest {
+  id        String        @id @default(uuid())
+  userId    String        @map("user_id")
+  reason    String
+  status    RequestStatus @default(PENDING)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("password_change_requests")
 }

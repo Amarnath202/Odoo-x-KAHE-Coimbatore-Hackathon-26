@@ -85,10 +85,15 @@ export class UsersRepository {
     });
   }
 
-  async softDelete(id: string) {
-    return prisma.user.update({
+  async delete(id: string) {
+    // Nullify userId in audit logs to avoid foreign key constraints
+    await prisma.auditLog.updateMany({
+      where: { userId: id },
+      data: { userId: null },
+    });
+
+    return prisma.user.delete({
       where: { id },
-      data: { deletedAt: new Date(), isActive: false },
     });
   }
 }

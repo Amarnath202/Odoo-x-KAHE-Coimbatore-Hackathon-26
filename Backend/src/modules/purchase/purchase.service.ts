@@ -168,6 +168,16 @@ export class PurchaseService {
 
     return purchaseRepository.findOrderById(orderId);
   }
+
+  /**
+   * DELETE Purchase Order:
+   * Hard delete from DB. Items cascade.
+   */
+  async deleteOrder(orderId: string) {
+    const order = await purchaseRepository.findOrderById(orderId);
+    if (!order) throw AppError.notFound(MESSAGES.PURCHASE.ORDER_NOT_FOUND);
+    return prisma.purchaseOrder.delete({ where: { id: orderId } });
+  }
 }
 
 export const purchaseService = new PurchaseService();
