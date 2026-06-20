@@ -1,0 +1,185 @@
+/**
+ * Central API client for Shiv Furniture Works ERP
+ * Attaches JWT Bearer token, handles 401 refresh, and normalises errors.
+ */
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+
+// ─── Token storage (in-memory + localStorage fallback) ────────────────────────
+let _accessToken = null;
+
+export function setToken(token) {
+  _accessToken = token;
+  if (token) localStorage.setItem('erp_access_token', token);
+  else localStorage.removeItem('erp_access_token');
+}
+
+export function getToken() {
+  if (_accessToken) return _accessToken;
+  _accessToken = localStorage.getItem('erp_access_token');
+  return _accessToken;
+}
+
+// ─── Core fetch wrapper ────────────────────────────────────────────────────────
+async function request(path, options = {}) {
+  const token = getToken();
+
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers,
+    credentials: 'include', // send cookies for refresh token
+  });
+
+  // Try to parse JSON regardless of status
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    const message = data?.message || data?.error || `HTTP ${response.status}`;
+    const err = new Error(message);
+    err.status = response.status;
+    err.data = data;
+    throw err;
+  }
+
+  return data;
+}
+
+// ─── Convenience methods ───────────────────────────────────────────────────────
+export const api = {
+  get: (path, params) => {
+    const url = params
+      ? `${path}?${new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '')).toString()}`
+      : path;
+    return request(url, { method: 'GET' });
+  },
+
+  post: (path, body) =>
+    request(path, { method: 'POST', body: JSON.stringify(body) }),
+
+  put: (path, body) =>
+    request(path, { method: 'PUT', body: JSON.stringify(body) }),
+
+  patch: (path, body) =>
+    request(path, { method: 'PATCH', body: JSON.stringify(body) }),
+
+  delete: (path) =>
+    request(path, { method: 'DELETE' }),
+};
+
+// ─── Auth helpers ──────────────────────────────────────────────────────────────
+export const authApi = {
+  login: (email, password) =>
+    api.post('/auth/login', { email, password }),
+
+  logout: () =>
+    api.post('/auth/logout', {}),
+
+  refresh: () =>
+    api.post('/auth/refresh', {}),
+};
+
+// ─── Products ──────────────────────────────────────────────────────────────────
+export const productsApi = {
+  list: (params) => api.get('/products', params),
+  getById: (id) => api.get(`/products/${id}`),
+  create: (body) => api.post('/products', body),
+  update: (id, body) => api.put(`/products/${id}`, body),
+  delete: (id) => api.delete(`/products/${id}`),
+};
+
+// ─── BOM ───────────────────────────────────────────────────────────────────────
+export const bomsApi = {
+  list: (params) => api.get('/boms', params),
+  getById: (id) => api.get(`/boms/${id}`),
+  create: (body) => api.post('/boms', body),
+  update: (id, body) => api.put(`/boms/${id}`, body),
+  delete: (id) => api.delete(`/boms/${id}`),
+};
+
+// ─── Sales ─────────────────────────────────────────────────────────────────────
+export const customersApi = {
+  list: (params) => api.get('/customers', params),
+  create: (body) => api.post('/customers', body),
+};
+
+export const salesApi = {
+  list: (params) => api.get('/sales-orders', params),
+  getById: (id) => api.get(`/sales-orders/${id}`),
+  create: (body) => api.post('/sales-orders', body),
+  confirm: (id, body) => api.post(`/sales-orders/${id}/confirm`, body),
+  deliver: (id, body) => api.post(`/sales-orders/${id}/deliver`, body),
+  cancel: (id) => api.post(`/sales-orders/${id}/cancel`, {}),
+};
+
+// ─── Purchase ──────────────────────────────────────────────────────────────────
+export const vendorsApi = {
+  list: (params) => api.get('/vendors', params),
+  create: (body) => api.post('/vendors', body),
+};
+
+export const purchaseApi = {
+  list: (params) => api.get('/purchase-orders', params),
+  getById: (id) => api.get(`/purchase-orders/${id}`),
+  create: (body) => api.post('/purchase-orders', body),
+  confirm: (id) => api.post(`/purchase-orders/${id}/confirm`, {}),
+  receive: (id, body) => api.post(`/purchase-orders/${id}/receive`, body),
+};
+
+// ─── Manufacturing ─────────────────────────────────────────────────────────────
+export const manufacturingApi = {
+  list: (params) => api.get('/manufacturing-orders', params),
+  getById: (id) => api.get(`/manufacturing-orders/${id}`),
+  create: (body) => api.post('/manufacturing-orders', body),
+  confirm: (id) => api.post(`/manufacturing-orders/${id}/confirm`, {}),
+  start: (id) => api.post(`/manufacturing-orders/${id}/start`, {}),
+  complete: (id) => api.post(`/manufacturing-orders/${id}/complete`, {}),
+};
+
+// ─── Inventory ─────────────────────────────────────────────────────────────────
+export const inventoryApi = {
+  list: (params) => api.get('/inventory', params),
+  adjust: (body) => api.post('/inventory/adjust', body),
+};
+
+// ─── Stock Ledger ──────────────────────────────────────────────────────────────
+export const stockLedgerApi = {
+  list: (params) => api.get('/stock-ledger', params),
+};
+
+// ─── Audit Logs ────────────────────────────────────────────────────────────────
+export const auditLogsApi = {
+  list: (params) => api.get('/audit-logs', params),
+};
+
+// ─── Dashboard ─────────────────────────────────────────────────────────────────
+export const dashboardApi = {
+  summary: (params) => api.get('/dashboard/summary', params),
+  sales: (params) => api.get('/dashboard/sales', params),
+  purchase: (params) => api.get('/dashboard/purchase', params),
+  manufacturing: (params) => api.get('/dashboard/manufacturing', params),
+  inventory: (params) => api.get('/dashboard/inventory', params),
+};
+
+// ─── Warehouses ────────────────────────────────────────────────────────────────
+export const warehousesApi = {
+  list: (params) => api.get('/warehouses', params),
+};
+
+// ─── Units ─────────────────────────────────────────────────────────────────────
+export const unitsApi = {
+  list: (params) => api.get('/units', params),
+};
