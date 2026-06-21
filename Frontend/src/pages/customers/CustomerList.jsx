@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, Users } from 'lucide-react';
-import { PageWrapper } from '../../components/UI';
+import { PageWrapper, Pagination } from '../../components/UI';
 import Modal from '../../components/Modal';
 import { customersApi } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 
 const AVATAR_IMAGES = [
   '/avatars/avatar_1.png',
@@ -19,9 +22,6 @@ function getAvatarForUser(name) {
   }
   return AVATAR_IMAGES[Math.abs(hash) % AVATAR_IMAGES.length];
 }
-import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
-import { useConfirm } from '../../context/ConfirmContext';
 
 export default function CustomerList() {
   const { user } = useAuth();
@@ -30,11 +30,13 @@ export default function CustomerList() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
-  
+
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' });
 
   const fetchCustomers = async () => {
@@ -49,24 +51,21 @@ export default function CustomerList() {
     }
   };
 
-  useEffect(() => {
-    fetchCustomers();
-  }, [user?.companyId]);
+  useEffect(() => { fetchCustomers(); }, [user?.companyId]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
 
-  const filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredCustomers = customers.filter(c =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (c.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const openModal = (customer = null) => {
     if (customer) {
       setEditingCustomer(customer);
-      setForm({
-        name: customer.name || '',
-        email: customer.email || '',
-        phone: customer.phone || '',
-        address: customer.address || ''
-      });
+      setForm({ name: customer.name || '', email: customer.email || '', phone: customer.phone || '', address: customer.address || '' });
     } else {
       setEditingCustomer(null);
       setForm({ name: '', email: '', phone: '', address: '' });
@@ -82,11 +81,7 @@ export default function CustomerList() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) {
-      toast('Customer name is required', 'error');
-      return;
-    }
-
+    if (!form.name.trim()) { toast('Customer name is required', 'error'); return; }
     setIsSubmitting(true);
     try {
       const payload = { ...form, companyId: user?.companyId };
@@ -157,35 +152,25 @@ export default function CustomerList() {
             No customers found.
           </div>
         ) : (
-          filteredCustomers.map(c => (
-            <div 
-              key={c.id} 
-              className="card hover:shadow-lg transition-shadow relative"
-            >
+          paginatedCustomers.map(c => (
+            <div key={c.id} className="card hover:shadow-lg transition-shadow relative">
               <div className="absolute top-4 right-4 flex items-center gap-1 z-10">
-                <button
-                  onClick={() => openModal(c)}
-                  className="p-1 text-text-secondary hover:text-accent transition-colors bg-bg-surface rounded tooltip"
-                >
+                <button onClick={() => openModal(c)} className="p-1 text-text-secondary hover:text-accent transition-colors bg-bg-surface rounded tooltip">
                   <Edit className="w-4 h-4" />
                   <span className="tooltip-content">Edit</span>
                 </button>
                 {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
-                  <button
-                    onClick={() => handleDelete(c.id)}
-                    className="p-1 text-text-secondary hover:text-danger transition-colors bg-bg-surface rounded tooltip"
-                  >
+                  <button onClick={() => handleDelete(c.id)} className="p-1 text-text-secondary hover:text-danger transition-colors bg-bg-surface rounded tooltip">
                     <Trash2 className="w-4 h-4" />
                     <span className="tooltip-content">Delete</span>
                   </button>
                 )}
               </div>
-
               <div className="flex flex-col h-full">
                 <div className="flex items-start gap-4 mb-4">
-                  <img 
-                    src={getAvatarForUser(c.name)} 
-                    alt={c.name} 
+                  <img
+                    src={getAvatarForUser(c.name)}
+                    alt={c.name}
                     className="w-12 h-12 rounded-full object-cover shrink-0 shadow-sm border-2 border-bg-light"
                   />
                   <div className="pr-12 min-w-0">
@@ -193,7 +178,6 @@ export default function CustomerList() {
                     <p className="text-sm text-text-muted truncate">{c.email || 'No email provided'}</p>
                   </div>
                 </div>
-
                 <div className="mt-auto flex flex-wrap gap-2 pt-2 border-t border-border">
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700">
                     CUSTOMER
@@ -210,44 +194,42 @@ export default function CustomerList() {
         )}
       </div>
 
+      {/* Pagination below the grid */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-border px-2 py-4 mt-4">
+          <div className="text-sm text-text-secondary">
+            Page <span className="font-semibold text-text-primary">{currentPage}</span> of <span className="font-semibold text-text-primary">{totalPages}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+              className="btn-secondary btn-sm flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+              ‹ Prev
+            </button>
+            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+              className="btn-secondary btn-sm flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+              Next ›
+            </button>
+          </div>
+        </div>
+      )}
+
       <Modal isOpen={isModalOpen} onClose={closeModal} title={editingCustomer ? 'Edit Customer' : 'Add Customer'}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="form-group">
             <label className="label">Customer Name *</label>
-            <input
-              type="text"
-              className="input"
-              value={form.name}
-              onChange={e => setForm({ ...form, name: e.target.value })}
-              required
-            />
+            <input type="text" className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
           </div>
           <div className="form-group">
             <label className="label">Email Address</label>
-            <input
-              type="email"
-              className="input"
-              value={form.email}
-              onChange={e => setForm({ ...form, email: e.target.value })}
-            />
+            <input type="email" className="input" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
           </div>
           <div className="form-group">
             <label className="label">Phone Number</label>
-            <input
-              type="text"
-              className="input"
-              value={form.phone}
-              onChange={e => setForm({ ...form, phone: e.target.value })}
-            />
+            <input type="text" className="input" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
           </div>
           <div className="form-group">
             <label className="label">Address</label>
-            <textarea
-              className="input"
-              rows={2}
-              value={form.address}
-              onChange={e => setForm({ ...form, address: e.target.value })}
-            />
+            <textarea className="input" rows={2} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
           </div>
           <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-border">
             <button type="button" onClick={closeModal} className="btn-secondary">Cancel</button>

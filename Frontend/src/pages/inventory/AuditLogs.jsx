@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, SlidersHorizontal, Activity, FileText, Download } from 'lucide-react';
-import { PageWrapper, EmptyState, formatDateTime } from '../../components/UI';
+import { Search, SlidersHorizontal, Activity, Download } from 'lucide-react';
+import { PageWrapper, EmptyState, formatDateTime, Pagination } from '../../components/UI';
 import { auditLogsApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -15,6 +15,8 @@ export default function AuditLogs() {
   const [exportMonth, setExportMonth] = useState('');
   const [exportYear, setExportYear] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   const toast = useToast();
 
   const fetchLogs = useCallback(async () => {
@@ -23,13 +25,13 @@ export default function AuditLogs() {
       const params = {};
       if (user?.companyId) params.companyId = user.companyId;
       if (moduleFilter) params.module = moduleFilter;
-      
+
       const res = await auditLogsApi.list(params);
       const items = res?.data?.items ?? res?.data ?? [];
-      
+
       setLogs(search.trim()
-        ? items.filter(i => 
-            i.action?.toLowerCase().includes(search.toLowerCase()) || 
+        ? items.filter(i =>
+            i.action?.toLowerCase().includes(search.toLowerCase()) ||
             i.reference?.toLowerCase().includes(search.toLowerCase()) ||
             i.user?.name?.toLowerCase().includes(search.toLowerCase())
           )
@@ -39,17 +41,23 @@ export default function AuditLogs() {
   }, [moduleFilter, search, user?.companyId]);
 
   useEffect(() => { const t = setTimeout(fetchLogs, 300); return () => clearTimeout(t); }, [fetchLogs]);
+  useEffect(() => { setCurrentPage(1); }, [search, moduleFilter]);
+
+  const totalPages = Math.ceil(logs.length / itemsPerPage);
+  const paginatedLogs = logs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <PageWrapper>
+      {/* Page Header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Audit Logs</h1>
+          <p className="page-subtitle">Track every system action and change across all modules.</p>
         </div>
         {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
           <div className="flex flex-wrap gap-3 items-center">
-            <select 
-              value={exportMonth} 
+            <select
+              value={exportMonth}
               onChange={e => setExportMonth(e.target.value)}
               className="input !py-1.5 !text-sm w-32"
             >
@@ -58,8 +66,8 @@ export default function AuditLogs() {
                 <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
               ))}
             </select>
-            <select 
-              value={exportYear} 
+            <select
+              value={exportYear}
               onChange={e => setExportYear(e.target.value)}
               className="input !py-1.5 !text-sm w-28"
             >
@@ -68,16 +76,16 @@ export default function AuditLogs() {
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
-            <button 
+            <button
               onClick={async () => {
                 try {
                   setExporting(true);
-                  await auditLogsApi.export({ 
-                    month: exportMonth || undefined, 
-                    year: exportYear || undefined 
+                  await auditLogsApi.export({
+                    month: exportMonth || undefined,
+                    year: exportYear || undefined,
                   });
                   toast('Export downloaded successfully', 'success');
-                } catch (err) {
+                } catch {
                   toast('Export failed', 'error');
                 } finally {
                   setExporting(false);
@@ -93,11 +101,17 @@ export default function AuditLogs() {
         )}
       </div>
 
+      {/* Filters */}
       <div className="flex flex-col md:flex-row gap-3 mb-6 items-center">
         <div className="search-bar w-full md:max-w-md">
           <Search className="search-icon text-text-muted" />
-          <input type="text" className="input pl-10" placeholder="Search by action, reference, or user..."
-            value={search} onChange={e => setSearch(e.target.value)} />
+          <input
+            type="text"
+            className="input pl-10"
+            placeholder="Search by action, reference, or user..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
           <SlidersHorizontal className="w-4 h-4 text-text-muted shrink-0" />
@@ -112,6 +126,7 @@ export default function AuditLogs() {
         </div>
       </div>
 
+      {/* Table Card — pagination sits inside the same card */}
       <div className="card p-0 overflow-hidden">
         <div className="table-container">
           <table className="table">
@@ -127,19 +142,33 @@ export default function AuditLogs() {
             <tbody>
               <AnimatePresence mode="popLayout">
                 {loading ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <tr key={i} className="border-b border-border"><td colSpan={5} className="px-6 py-4"><div className="h-4 bg-bg-light animate-pulse rounded" /></td></tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="border-b border-border">
+                      <td colSpan={5} className="px-6 py-4">
+                        <div className="h-4 bg-bg-light animate-pulse rounded" />
+                      </td>
+                    </tr>
                   ))
                 ) : logs.length === 0 ? (
-                  <tr><td colSpan={5} className="py-0">
-                    <EmptyState icon={Activity} title="No audit logs found"
-                      description={search ? 'Try adjusting your search criteria' : 'System events will appear here'} />
-                  </td></tr>
+                  <tr>
+                    <td colSpan={5} className="py-0">
+                      <EmptyState
+                        icon={Activity}
+                        title="No audit logs found"
+                        description={search ? 'Try adjusting your search criteria' : 'System events will appear here'}
+                      />
+                    </td>
+                  </tr>
                 ) : (
-                  logs.map((log, i) => (
-                    <motion.tr key={log.id ?? i}
-                      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                      transition={{ delay: i * 0.02 }} className="border-b border-border hover:bg-black/[0.01]">
+                  paginatedLogs.map((log, i) => (
+                    <motion.tr
+                      key={log.id ?? i}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ delay: i * 0.02 }}
+                      className="border-b border-border hover:bg-black/[0.01]"
+                    >
                       <td className="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">
                         {formatDateTime(log.createdAt ?? log.timestamp)}
                       </td>
@@ -167,6 +196,8 @@ export default function AuditLogs() {
             </tbody>
           </table>
         </div>
+        {/* Pagination inside card — same as Inventory */}
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </div>
     </PageWrapper>
   );

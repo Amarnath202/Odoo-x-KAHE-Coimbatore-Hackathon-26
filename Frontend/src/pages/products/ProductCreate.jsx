@@ -170,15 +170,15 @@ export default function ProductCreate() {
             {/* Sales Price */}
             <div className="form-group">
               <label className="label">Sales Price (INR) *</label>
-              <input type="number" step="0.01" className="input" placeholder="e.g. 15000"
-                value={formData.salesPrice} onChange={e => setFormData({ ...formData, salesPrice: e.target.value })} required />
+              <input type="number" step="1" min="0" className="input" placeholder="e.g. 15000"
+                value={formData.salesPrice} onChange={e => setFormData({ ...formData, salesPrice: Math.floor(Number(e.target.value)) || '' })} required />
             </div>
 
             {/* Cost Price */}
             <div className="form-group">
               <label className="label">Cost Price (INR) *</label>
-              <input type="number" step="0.01" className="input" placeholder="e.g. 9500"
-                value={formData.costPrice} onChange={e => setFormData({ ...formData, costPrice: e.target.value })} required />
+              <input type="number" step="1" min="0" className="input" placeholder="e.g. 9500"
+                value={formData.costPrice} onChange={e => setFormData({ ...formData, costPrice: Math.floor(Number(e.target.value)) || '' })} required />
             </div>
 
             {/* Procure on demand */}

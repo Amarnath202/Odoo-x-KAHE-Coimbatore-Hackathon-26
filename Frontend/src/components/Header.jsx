@@ -190,12 +190,11 @@ export default function Header({ setIsMobileMenuOpen }) {
             className="flex items-center gap-2.5 hover:bg-primary-pale px-2.5 py-1.5 rounded-xl transition-colors text-left"
             onClick={() => setIsProfileOpen(!isProfileOpen)}
           >
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-              style={{ background: 'linear-gradient(135deg, #714B67, #00A09D)' }}
-            >
-              {user?.name?.[0]?.toUpperCase() || 'U'}
-            </div>
+            <img 
+              src="/avatar-user.png" 
+              alt="User Avatar" 
+              className="w-8 h-8 rounded-full object-cover shrink-0 border border-border"
+            />
             <div className="hidden md:block text-left">
               <p className="text-xs font-semibold text-text-primary leading-tight">{user?.name}</p>
               <p className="text-[10px] text-text-muted">{user?.role}</p>

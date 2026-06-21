@@ -5,7 +5,7 @@ import {
   ShoppingCart, Plus, Search, Eye, Trash2,
   TrendingUp, Clock, CheckCircle, XCircle, Package, Download,
 } from 'lucide-react';
-import { PageWrapper, EmptyState, formatINR, formatDate } from '../../components/UI';
+import { PageWrapper, EmptyState, formatINR, formatDate, Pagination } from '../../components/UI';
 import StatusBadge from '../../components/StatusBadge';
 import { salesApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
@@ -41,6 +41,8 @@ export default function Sales() {
   const [exportMonth, setExportMonth] = useState('');
   const [exportYear, setExportYear] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -62,6 +64,10 @@ export default function Sales() {
     const t = setTimeout(fetchOrders, 300);
     return () => clearTimeout(t);
   }, [fetchOrders]);
+  useEffect(() => { setCurrentPage(1); }, [filter, search]);
+
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const paginatedOrders = orders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const kpi = {
     total: orders.length,
@@ -183,7 +189,8 @@ export default function Sales() {
       </div>
 
       {/* Table */}
-      <motion.div className="table-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
+      <div className="card p-0 overflow-hidden">
+        <motion.div className="table-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
         <table className="table">
           <thead>
             <tr>
@@ -212,7 +219,7 @@ export default function Sales() {
                   />
                 </td></tr>
               ) : (
-                orders.map((order, i) => (
+                paginatedOrders.map((order, i) => (
                   <motion.tr key={order.id}
                     initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                     transition={{ delay: i * 0.03 }}
@@ -242,7 +249,9 @@ export default function Sales() {
             </AnimatePresence>
           </tbody>
         </table>
-      </motion.div>
+        </motion.div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+      </div>
 
       {/* Cancel Confirm Modal */}
       <AnimatePresence>

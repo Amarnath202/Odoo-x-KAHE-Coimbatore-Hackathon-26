@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Plus, Edit, Trash2, User as UserIcon, Mail, Shield, Calendar, Activity, MapPin, Phone } from 'lucide-react';
-import PageWrapper from '../../components/UI';
+import { PageWrapper, Pagination } from '../../components/UI';
 import Modal from '../../components/Modal';
 import { usersApi } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
@@ -9,23 +9,7 @@ import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConfirm } from '../../context/ConfirmContext';
 
-// Cartoonish avatar images for user cards
-const AVATAR_IMAGES = [
-  '/avatars/avatar_1.png',
-  '/avatars/avatar_2.png',
-  '/avatars/avatar_3.svg',
-  '/avatars/avatar_4.svg',
-];
-
-// Deterministic avatar assignment based on user name
-function getAvatarForUser(name) {
-  if (!name) return AVATAR_IMAGES[0];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return AVATAR_IMAGES[Math.abs(hash) % AVATAR_IMAGES.length];
-}
+// Removed dynamic avatars, using static uploaded avatar
 
 export default function Users() {
   const { user } = useAuth();
@@ -35,6 +19,8 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -57,6 +43,10 @@ export default function Users() {
     const timer = setTimeout(fetchUsers, 300);
     return () => clearTimeout(timer);
   }, [fetchUsers]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+  const paginatedUsers = users.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirm({ message: 'Are you sure you want to delete this user?' });
@@ -130,7 +120,7 @@ export default function Users() {
             No users found.
           </div>
         ) : (
-          users.map(u => (
+          paginatedUsers.map(u => (
             <div 
               key={u.id} 
               className="card hover:shadow-lg transition-shadow cursor-pointer relative"
@@ -160,7 +150,7 @@ export default function Users() {
               <div className="flex flex-col h-full">
                 <div className="flex items-start gap-4 mb-4">
                   <img 
-                    src={getAvatarForUser(u.name)} 
+                    src="/avatar-user.png" 
                     alt={u.name} 
                     className="w-12 h-12 rounded-full object-cover shrink-0 shadow-sm border-2 border-bg-light"
                   />
@@ -183,6 +173,11 @@ export default function Users() {
           ))
         )}
       </div>
+      {!loading && users.length > 0 && (
+        <div className="mt-4 card p-0 overflow-hidden bg-bg-surface border border-border/40">
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        </div>
+      )}
 
       {/* User Details Modal */}
       <Modal isOpen={!!selectedUser} onClose={() => setSelectedUser(null)} title="User Information">
@@ -190,7 +185,7 @@ export default function Users() {
           <div className="p-2">
             <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border">
               <img 
-                src={getAvatarForUser(selectedUser.name)} 
+                src="/avatar-user.png" 
                 alt={selectedUser.name} 
                 className="w-16 h-16 rounded-full object-cover shrink-0 shadow-glow border-2 border-bg-light"
               />

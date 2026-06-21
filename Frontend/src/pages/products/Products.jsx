@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Plus, Eye, Edit, SlidersHorizontal, Tag, Trash2, Download, LayoutGrid, List } from 'lucide-react';
-import PageWrapper from '../../components/UI';
-import { formatINR } from '../../components/UI';
+import PageWrapper, { Pagination, formatINR } from '../../components/UI';
 import { productsApi } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
@@ -27,6 +26,8 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [strategyFilter, setStrategyFilter] = useState('All');
   const [exporting, setExporting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('products_view_mode') || 'table');
 
   const toggleViewMode = (mode) => {
@@ -54,6 +55,10 @@ export default function Products() {
     const timer = setTimeout(fetchProducts, 300);
     return () => clearTimeout(timer);
   }, [fetchProducts]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, strategyFilter]);
+
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const paginatedProducts = products.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirm({ message: 'Are you sure you want to delete this product?' });
@@ -172,7 +177,7 @@ export default function Products() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in">
-            {products.map(p => {
+            {paginatedProducts.map(p => {
               const design = getProductIcon(p.name);
               const ProductIcon = design.icon;
               return (
@@ -273,7 +278,7 @@ export default function Products() {
                     </td>
                   </tr>
                 ) : (
-                  products.map(p => (
+                  paginatedProducts.map(p => (
                     <tr key={p.id} className="border-b border-border hover:bg-black/[0.01]">
                       <td className="px-6 py-4">
                         <p className="text-sm font-semibold text-text-primary">{p.name}</p>
@@ -323,6 +328,11 @@ export default function Products() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+      {!loading && products.length > 0 && (
+        <div className="mt-4 card p-0 overflow-hidden bg-bg-surface border border-border/40">
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       )}
     </PageWrapper>

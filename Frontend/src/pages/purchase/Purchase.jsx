@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Truck, Plus, Search, Eye, TrendingUp, Clock, CheckCircle, XCircle, Package, Trash2, Download } from 'lucide-react';
-import { PageWrapper, EmptyState, formatINR, formatDate } from '../../components/UI';
+import { PageWrapper, EmptyState, formatINR, formatDate, Pagination } from '../../components/UI';
 import StatusBadge from '../../components/StatusBadge';
 import { purchaseApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
@@ -35,6 +35,8 @@ export default function Purchase() {
   const [exportMonth, setExportMonth] = useState('');
   const [exportYear, setExportYear] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -49,6 +51,10 @@ export default function Purchase() {
   }, [filter, search, user?.companyId]);
 
   useEffect(() => { const t = setTimeout(fetchOrders, 300); return () => clearTimeout(t); }, [fetchOrders]);
+  useEffect(() => { setCurrentPage(1); }, [filter, search]);
+
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const paginatedOrders = orders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirm({ message: 'Are you sure you want to delete this purchase order?' });
@@ -164,7 +170,8 @@ export default function Purchase() {
         </div>
       </div>
 
-      <motion.div className="table-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
+      <div className="card p-0 overflow-hidden">
+        <motion.div className="table-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
         <table className="table">
           <thead>
             <tr>
@@ -186,7 +193,7 @@ export default function Purchase() {
                   />
                 </td></tr>
               ) : (
-                orders.map((order, i) => (
+                paginatedOrders.map((order, i) => (
                   <motion.tr key={order.id}
                     initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                     transition={{ delay: i * 0.03 }} className="cursor-pointer hover:bg-bg-surface/60"
@@ -215,7 +222,9 @@ export default function Purchase() {
             </AnimatePresence>
           </tbody>
         </table>
-      </motion.div>
+        </motion.div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+      </div>
     </PageWrapper>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Check, X } from 'lucide-react';
-import PageWrapper from '../../components/UI';
+import { PageWrapper, Pagination } from '../../components/UI';
 import { passwordChangeApi } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 import { useConfirm } from '../../context/ConfirmContext';
@@ -10,6 +10,8 @@ export default function PasswordRequests() {
   const confirm = useConfirm();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
@@ -29,6 +31,9 @@ export default function PasswordRequests() {
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
+
+  const totalPages = Math.ceil(requests.length / itemsPerPage);
+  const paginatedRequests = requests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleApprove = async (id) => {
     const isConfirmed = await confirm({ message: 'Approve this password change request?', confirmText: 'Approve', confirmColor: 'primary' });
@@ -108,7 +113,7 @@ export default function PasswordRequests() {
                   </td>
                 </tr>
               ) : (
-                requests.map(r => (
+                paginatedRequests.map(r => (
                   <tr key={r.id} className="border-b border-border hover:bg-black/[0.01]">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -164,6 +169,7 @@ export default function PasswordRequests() {
             </tbody>
           </table>
         </div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </div>
     </PageWrapper>
   );

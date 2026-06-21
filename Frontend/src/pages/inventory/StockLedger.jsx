@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, SlidersHorizontal, History, FileText, Package } from 'lucide-react';
-import { PageWrapper, EmptyState, formatDateTime } from '../../components/UI';
+import { Search, SlidersHorizontal, History, Package } from 'lucide-react';
+import { PageWrapper, EmptyState, formatDateTime, Pagination } from '../../components/UI';
 import { stockLedgerApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -11,6 +11,8 @@ export default function StockLedger() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const fetchLedger = useCallback(async () => {
     setLoading(true);
@@ -18,13 +20,11 @@ export default function StockLedger() {
       const params = {};
       if (user?.companyId) params.companyId = user.companyId;
       if (typeFilter) params.movementType = typeFilter;
-      // Note: Backend might not support free-text search on ledger, we'll filter client-side for simple cases
       const res = await stockLedgerApi.list(params);
       const items = res?.data?.items ?? res?.data ?? [];
-      
       setLedger(search.trim()
-        ? items.filter(i => 
-            i.product?.name?.toLowerCase().includes(search.toLowerCase()) || 
+        ? items.filter(i =>
+            i.product?.name?.toLowerCase().includes(search.toLowerCase()) ||
             i.reference?.toLowerCase().includes(search.toLowerCase())
           )
         : items
@@ -33,6 +33,10 @@ export default function StockLedger() {
   }, [typeFilter, search, user?.companyId]);
 
   useEffect(() => { const t = setTimeout(fetchLedger, 300); return () => clearTimeout(t); }, [fetchLedger]);
+  useEffect(() => { setCurrentPage(1); }, [search, typeFilter]);
+
+  const totalPages = Math.ceil(ledger.length / itemsPerPage);
+  const paginatedLedger = ledger.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <PageWrapper>
@@ -61,6 +65,7 @@ export default function StockLedger() {
         </div>
       </div>
 
+      {/* Table inside card — pagination lives inside too */}
       <div className="card p-0 overflow-hidden">
         <div className="table-container">
           <table className="table">
@@ -76,16 +81,22 @@ export default function StockLedger() {
             <tbody>
               <AnimatePresence mode="popLayout">
                 {loading ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <tr key={i} className="border-b border-border"><td colSpan={5} className="px-6 py-4"><div className="h-4 bg-bg-light animate-pulse rounded" /></td></tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="border-b border-border">
+                      <td colSpan={5} className="px-6 py-4">
+                        <div className="h-4 bg-bg-light animate-pulse rounded" />
+                      </td>
+                    </tr>
                   ))
                 ) : ledger.length === 0 ? (
-                  <tr><td colSpan={5} className="py-0">
-                    <EmptyState icon={History} title="No stock ledger entries found"
-                      description={search ? 'Try adjusting your search criteria' : 'Entries will appear here as stock moves'} />
-                  </td></tr>
+                  <tr>
+                    <td colSpan={5} className="py-0">
+                      <EmptyState icon={History} title="No stock ledger entries found"
+                        description={search ? 'Try adjusting your search criteria' : 'Entries will appear here as stock moves'} />
+                    </td>
+                  </tr>
                 ) : (
-                  ledger.map((entry, i) => (
+                  paginatedLedger.map((entry, i) => (
                     <motion.tr key={entry.id ?? i}
                       initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                       transition={{ delay: i * 0.02 }} className="border-b border-border hover:bg-black/[0.01]">
@@ -100,9 +111,9 @@ export default function StockLedger() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase ${
-                          ['IN'].includes(entry.movementType) ? 'bg-success/10 text-success' :
-                          ['OUT'].includes(entry.movementType) ? 'bg-danger/10 text-danger' :
-                          ['RESERVE'].includes(entry.movementType) ? 'bg-warning/10 text-warning' :
+                          entry.movementType === 'IN' ? 'bg-success/10 text-success' :
+                          entry.movementType === 'OUT' ? 'bg-danger/10 text-danger' :
+                          entry.movementType === 'RESERVE' ? 'bg-warning/10 text-warning' :
                           'bg-primary/10 text-primary'
                         }`}>
                           {entry.movementType}
@@ -128,6 +139,7 @@ export default function StockLedger() {
             </tbody>
           </table>
         </div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </div>
     </PageWrapper>
   );

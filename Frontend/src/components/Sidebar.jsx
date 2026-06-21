@@ -79,8 +79,8 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
         onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
         className="sidebar-logo hover:opacity-90 transition-opacity duration-200 cursor-pointer no-underline flex items-center gap-3 px-4 py-4"
       >
-        <div className="w-9 h-9 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center shrink-0">
-          <img src="/logo-new.png" alt="Shiv Furniture" className="w-9 h-9 object-contain" />
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-white flex items-center justify-center shrink-0 p-0.5 shadow-sm">
+          <img src="/logo-new.png" alt="Shiv Furniture" className="w-full h-full object-contain" />
         </div>
         <div className="flex flex-col min-w-0">
           <span className="text-sm font-bold text-white truncate leading-tight">Shiv Furniture</span>

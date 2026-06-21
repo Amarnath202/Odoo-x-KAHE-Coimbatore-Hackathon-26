@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Package, Search, SlidersHorizontal, AlertTriangle, TrendingUp, Download } from 'lucide-react';
-import { PageWrapper, EmptyState } from '../../components/UI';
+import { PageWrapper, EmptyState, Pagination } from '../../components/UI';
 import { inventoryApi, warehousesApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -14,6 +14,8 @@ export default function Inventory() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   const toast = useToast();
 
   // Load warehouses once
@@ -41,6 +43,10 @@ export default function Inventory() {
   }, [warehouseId, user?.companyId, search]);
 
   useEffect(() => { fetchInventory(); }, [fetchInventory]);
+  useEffect(() => { setCurrentPage(1); }, [search, warehouseId]);
+
+  const totalPages = Math.ceil(inventory.length / itemsPerPage);
+  const paginatedInventory = inventory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const kpi = {
     total: inventory.length,
@@ -145,7 +151,7 @@ export default function Inventory() {
                     description="Stock will appear here once goods are received from Purchase Orders" />
                 </td></tr>
               ) : (
-                inventory.map((item, i) => {
+                paginatedInventory.map((item, i) => {
                   const onHand    = item.onHandQty    ?? 0;
                   const reserved  = item.reservedQty  ?? 0;
                   const freeToUse = item.freeToUseQty ?? 0;
@@ -187,6 +193,7 @@ export default function Inventory() {
             </tbody>
           </table>
         </div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </div>
     </PageWrapper>
   );

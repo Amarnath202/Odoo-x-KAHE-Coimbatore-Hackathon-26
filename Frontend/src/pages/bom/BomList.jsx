@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Plus, Search, Eye, Edit, Layers, Package, Trash2 } from 'lucide-react';
-import { PageWrapper, EmptyState } from '../../components/UI';
+import { PageWrapper, EmptyState, Pagination } from '../../components/UI';
 import { bomsApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -16,6 +15,8 @@ export default function BomList() {
   const [boms, setBoms] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const fetchBoms = useCallback(async () => {
     setLoading(true);
@@ -29,6 +30,10 @@ export default function BomList() {
   }, [search, user?.companyId]);
 
   useEffect(() => { const t = setTimeout(fetchBoms, 300); return () => clearTimeout(t); }, [fetchBoms]);
+  useEffect(() => { setCurrentPage(1); }, [search]);
+
+  const totalPages = Math.ceil(boms.length / itemsPerPage);
+  const paginatedBoms = boms.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirm({ message: 'Are you sure you want to delete this BoM?' });
@@ -76,7 +81,7 @@ export default function BomList() {
             </thead>
             <tbody>
               {loading ? (
-                Array.from({ length: 4 }).map((_, i) => (
+                Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="border-b border-border">
                     <td colSpan={6} className="px-6 py-4">
                       <div className="h-4 bg-bg-light animate-pulse rounded" />
@@ -84,14 +89,16 @@ export default function BomList() {
                   </tr>
                 ))
               ) : boms.length === 0 ? (
-                <tr><td colSpan={6} className="py-0">
-                  <EmptyState icon={Layers} title="No Bill of Materials found"
-                    description={search ? 'Try a different search' : 'Create your first BoM to start manufacturing'}
-                    action={!search && <Link to="/bom/create" className="btn-primary btn-sm mt-2"><Plus className="w-3.5 h-3.5" />Create BoM</Link>}
-                  />
-                </td></tr>
+                <tr>
+                  <td colSpan={6} className="py-0">
+                    <EmptyState icon={Layers} title="No Bill of Materials found"
+                      description={search ? 'Try a different search' : 'Create your first BoM to start manufacturing'}
+                      action={!search && <Link to="/bom/create" className="btn-primary btn-sm mt-2"><Plus className="w-3.5 h-3.5" />Create BoM</Link>}
+                    />
+                  </td>
+                </tr>
               ) : (
-                boms.map(bom => (
+                paginatedBoms.map((bom) => (
                   <tr key={bom.id} className="border-b border-border hover:bg-black/[0.01] cursor-pointer"
                     onClick={() => navigate(`/bom/${bom.id}`)}>
                     <td className="px-6 py-4">
@@ -142,6 +149,7 @@ export default function BomList() {
             </tbody>
           </table>
         </div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </div>
     </PageWrapper>
   );

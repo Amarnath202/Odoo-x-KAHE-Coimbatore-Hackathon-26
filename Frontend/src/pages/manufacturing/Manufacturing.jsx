@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wrench, Plus, Search, Eye, TrendingUp, Clock, CheckCircle, Play, Package, Trash2 } from 'lucide-react';
-import { PageWrapper, EmptyState, formatDate } from '../../components/UI';
+import { PageWrapper, EmptyState, formatDate, Pagination } from '../../components/UI';
 import StatusBadge from '../../components/StatusBadge';
 import { manufacturingApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
@@ -40,6 +40,8 @@ export default function Manufacturing() {
   const [search, setSearch] = useState('');
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -54,6 +56,10 @@ export default function Manufacturing() {
   }, [filter, search, user?.companyId]);
 
   useEffect(() => { const t = setTimeout(fetchOrders, 300); return () => clearTimeout(t); }, [fetchOrders]);
+  useEffect(() => { setCurrentPage(1); }, [filter, search]);
+
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const paginatedOrders = orders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirm({ message: 'Are you sure you want to delete this manufacturing order?' });
@@ -124,7 +130,8 @@ export default function Manufacturing() {
         </div>
       </div>
 
-      <motion.div className="table-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
+      <div className="card p-0 overflow-hidden">
+        <motion.div className="table-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
         <table className="table">
           <thead>
             <tr>
@@ -146,7 +153,7 @@ export default function Manufacturing() {
                   />
                 </td></tr>
               ) : (
-                orders.map((order, i) => (
+                paginatedOrders.map((order, i) => (
                   <motion.tr key={order.id}
                     initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     transition={{ delay: i * 0.03 }}
@@ -183,7 +190,9 @@ export default function Manufacturing() {
             </AnimatePresence>
           </tbody>
         </table>
-      </motion.div>
+        </motion.div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+      </div>
     </PageWrapper>
   );
 }
