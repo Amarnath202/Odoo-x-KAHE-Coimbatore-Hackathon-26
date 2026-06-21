@@ -42,58 +42,55 @@ export default function AuditLogs() {
 
   return (
     <PageWrapper>
-      <div className="page-header flex flex-wrap gap-4 items-center justify-between">
+      <div className="page-header">
         <div>
           <h1 className="page-title">Audit Logs</h1>
-          <p className="page-subtitle">Complete history of system actions and changes.</p>
         </div>
-        <div className="flex flex-wrap gap-3 items-center">
-          {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
-            <>
-              <select 
-                value={exportMonth} 
-                onChange={e => setExportMonth(e.target.value)}
-                className="input !py-1.5 !text-sm w-32"
-              >
-                <option value="">All Months</option>
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
-                ))}
-              </select>
-              <select 
-                value={exportYear} 
-                onChange={e => setExportYear(e.target.value)}
-                className="input !py-1.5 !text-sm w-28"
-              >
-                <option value="">All Years</option>
-                {[2024, 2025, 2026, 2027].map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-              <button 
-                onClick={async () => {
-                  try {
-                    setExporting(true);
-                    await auditLogsApi.export({ 
-                      month: exportMonth || undefined, 
-                      year: exportYear || undefined 
-                    });
-                    toast('Export downloaded successfully', 'success');
-                  } catch (err) {
-                    toast('Export failed', 'error');
-                  } finally {
-                    setExporting(false);
-                  }
-                }}
-                disabled={exporting}
-                className="btn-secondary whitespace-nowrap"
-              >
-                <Download className="w-4 h-4" />
-                {exporting ? 'Exporting...' : 'Export Excel'}
-              </button>
-            </>
-          )}
-        </div>
+        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+          <div className="flex flex-wrap gap-3 items-center">
+            <select 
+              value={exportMonth} 
+              onChange={e => setExportMonth(e.target.value)}
+              className="input !py-1.5 !text-sm w-32"
+            >
+              <option value="">All Months</option>
+              {Array.from({ length: 12 }).map((_, i) => (
+                <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
+              ))}
+            </select>
+            <select 
+              value={exportYear} 
+              onChange={e => setExportYear(e.target.value)}
+              className="input !py-1.5 !text-sm w-28"
+            >
+              <option value="">All Years</option>
+              {[2024, 2025, 2026, 2027].map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <button 
+              onClick={async () => {
+                try {
+                  setExporting(true);
+                  await auditLogsApi.export({ 
+                    month: exportMonth || undefined, 
+                    year: exportYear || undefined 
+                  });
+                  toast('Export downloaded successfully', 'success');
+                } catch (err) {
+                  toast('Export failed', 'error');
+                } finally {
+                  setExporting(false);
+                }
+              }}
+              disabled={exporting}
+              className="btn-secondary whitespace-nowrap"
+            >
+              <Download className="w-4 h-4" />
+              {exporting ? 'Exporting...' : 'Export Excel'}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col md:flex-row gap-3 mb-6 items-center">
@@ -159,15 +156,9 @@ export default function AuditLogs() {
                         <span className="text-sm text-text-primary font-medium">{log.action}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-xs font-mono text-accent">
+                        <span className="text-xs font-mono text-text-secondary">
                           {log.reference ?? log.entityId ?? '—'}
                         </span>
-                        {log.details && (
-                          <div className="mt-1 flex gap-2 text-[10px] text-text-muted">
-                            {log.details.oldValue && <span>Old: {JSON.stringify(log.details.oldValue)}</span>}
-                            {log.details.newValue && <span>New: {JSON.stringify(log.details.newValue)}</span>}
-                          </div>
-                        )}
                       </td>
                     </motion.tr>
                   ))

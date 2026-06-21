@@ -77,19 +77,19 @@ export default function Manufacturing() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Total Orders', value: kpi.total,      icon: Wrench,       color: 'bg-primary/10 text-primary' },
-          { label: 'Confirmed',    value: kpi.confirmed,  icon: CheckCircle,  color: 'bg-accent/10 text-accent' },
-          { label: 'In Progress',  value: kpi.inProgress, icon: Clock,        color: 'bg-warning/10 text-warning' },
-          { label: 'Completed',    value: kpi.done,       icon: TrendingUp,   color: 'bg-success/10 text-success' },
+          { label: 'Total Orders', value: kpi.total,      icon: Wrench,       iconCls: 'bg-primary/10 text-primary' },
+          { label: 'Confirmed',    value: kpi.confirmed,  icon: CheckCircle,  iconCls: 'bg-accent/10 text-accent' },
+          { label: 'In Progress',  value: kpi.inProgress, icon: Clock,        iconCls: 'bg-amber-100 text-amber-600' },
+          { label: 'Completed',    value: kpi.done,       icon: TrendingUp,   iconCls: 'bg-green-100 text-green-600' },
         ].map((k, i) => (
-          <motion.div key={k.label} className="card flex items-center gap-3 py-4"
+          <motion.div key={k.label} className="mini-kpi"
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <div className={`w-10 h-10 rounded-btn flex items-center justify-center shrink-0 ${k.color}`}>
+            <div className={`mini-kpi-icon ${k.iconCls}`}>
               <k.icon className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-text-muted">{k.label}</p>
-              <p className="text-lg font-bold text-text-primary leading-tight">{k.value}</p>
+              <p className="mini-kpi-label">{k.label}</p>
+              <p className="mini-kpi-value">{k.value}</p>
             </div>
           </motion.div>
         ))}

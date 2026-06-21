@@ -44,11 +44,12 @@ export default function BomList() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Bill of Materials</h1>
-          <p className="page-subtitle">Define components and operations for manufactured products.</p>
         </div>
-        <Link to="/bom/create" className="btn-primary">
-          <Plus className="w-4 h-4" />Create BoM
-        </Link>
+        <div className="flex items-center">
+          <Link to="/bom/create" className="btn-primary">
+            <Plus className="w-4 h-4" />Create BoM
+          </Link>
+        </div>
       </div>
 
       <div className="search-bar w-full md:max-w-md mb-6">

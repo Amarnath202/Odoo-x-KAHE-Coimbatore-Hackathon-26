@@ -78,7 +78,9 @@ export default function Dashboard() {
       {/* Welcome */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">{greeting()}, {user?.name?.split(' ')[0]} 👋</h1>
+          <h1 className="page-title">
+            {greeting()}, <span style={{ fontFamily: 'Caveat, cursive', fontWeight: 700, fontSize: '2.2rem', color: 'var(--color-primary)' }}>{user?.name?.split(' ')[0]}</span> 👋
+          </h1>
           <p className="page-subtitle">Here's what's happening at Shiv Furniture Works today.</p>
         </div>
         <div className="flex gap-2">

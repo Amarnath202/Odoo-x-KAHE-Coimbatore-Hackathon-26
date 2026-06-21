@@ -51,13 +51,12 @@ export default function Inventory() {
 
   return (
     <PageWrapper>
-      <div className="page-header flex flex-wrap gap-4 items-center justify-between">
+      <div className="page-header">
         <div>
           <h1 className="page-title">Inventory</h1>
-          <p className="page-subtitle">Real-time stock levels across all warehouses</p>
         </div>
-        <div className="flex flex-wrap gap-3 items-center">
-          {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+          <div className="flex items-center">
             <button 
               onClick={async () => {
                 try {
@@ -76,26 +75,26 @@ export default function Inventory() {
               <Download className="w-4 h-4" />
               {exporting ? 'Exporting...' : 'Export Excel'}
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Total Products', value: kpi.total,        icon: Package,       color: 'bg-primary/10 text-primary'  },
-          { label: 'Low Stock',      value: kpi.lowStock,     icon: AlertTriangle, color: 'bg-warning/10 text-warning'  },
-          { label: 'Out of Stock',   value: kpi.outOfStock,   icon: AlertTriangle, color: 'bg-danger/10 text-danger'    },
-          { label: 'Total SKUs',     value: inventory.length, icon: TrendingUp,    color: 'bg-success/10 text-success'  },
+          { label: 'Total Products', value: kpi.total,        icon: Package,       iconCls: 'bg-primary/10 text-primary' },
+          { label: 'Low Stock',      value: kpi.lowStock,     icon: AlertTriangle, iconCls: 'bg-warning/10 text-warning' },
+          { label: 'Out of Stock',   value: kpi.outOfStock,   icon: AlertTriangle, iconCls: 'bg-red-100 text-red-600'    },
+          { label: 'Total SKUs',     value: inventory.length, icon: TrendingUp,    iconCls: 'bg-green-100 text-green-600' },
         ].map((k, i) => (
-          <motion.div key={k.label} className="card flex items-center gap-3 py-4"
+          <motion.div key={k.label} className="mini-kpi"
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <div className={`w-10 h-10 rounded-btn flex items-center justify-center shrink-0 ${k.color}`}>
+            <div className={`mini-kpi-icon ${k.iconCls}`}>
               <k.icon className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-text-muted">{k.label}</p>
-              <p className="text-lg font-bold text-text-primary leading-tight">{k.value}</p>
+              <p className="mini-kpi-label">{k.label}</p>
+              <p className="mini-kpi-value">{k.value}</p>
             </div>
           </motion.div>
         ))}
@@ -158,15 +157,8 @@ export default function Inventory() {
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
                       className="border-b border-border hover:bg-black/[0.01]">
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                            <Package className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-text-primary">{item.product?.name ?? '—'}</p>
-                            <p className="text-xs text-text-muted font-mono">{item.product?.sku ?? ''}</p>
-                          </div>
-                        </div>
+                        <p className="text-sm font-semibold text-text-primary">{item.product?.name ?? '—'}</p>
+                        <p className="text-xs text-text-muted font-mono">{item.product?.sku ?? ''}</p>
                       </td>
                       <td className="px-6 py-4 text-sm text-text-secondary">{item.warehouse?.name ?? '—'}</td>
                       <td className="px-6 py-4 text-center">
@@ -182,9 +174,9 @@ export default function Inventory() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          isOut ? 'bg-danger/10 text-danger' : isLow ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
+                          isOut ? 'bg-red-100 text-red-700' : isLow ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${isOut ? 'bg-danger' : isLow ? 'bg-warning' : 'bg-success'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${isOut ? 'bg-red-500' : isLow ? 'bg-yellow-500' : 'bg-green-500'}`} />
                           {isOut ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock'}
                         </span>
                       </td>

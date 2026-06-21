@@ -1,11 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Edit, Trash2, User as UserIcon } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, User as UserIcon, Mail, Shield, Calendar, Activity, MapPin, Phone } from 'lucide-react';
 import PageWrapper from '../../components/UI';
+import Modal from '../../components/Modal';
 import { usersApi } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 
 import { useAuth } from '../../context/AuthContext';
+
+// Cartoonish avatar images for user cards
+const AVATAR_IMAGES = [
+  '/avatars/avatar_1.png',
+  '/avatars/avatar_2.png',
+  '/avatars/avatar_3.svg',
+  '/avatars/avatar_4.svg',
+];
+
+// Deterministic avatar assignment based on user name
+function getAvatarForUser(name) {
+  if (!name) return AVATAR_IMAGES[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_IMAGES[Math.abs(hash) % AVATAR_IMAGES.length];
+}
 
 export default function Users() {
   const { user } = useAuth();
@@ -13,6 +32,7 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -94,85 +114,143 @@ export default function Users() {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="card p-0 overflow-hidden">
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr className="bg-bg-surface/50 border-b border-border">
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary text-xs uppercase tracking-wider">User</th>
-                <th className="px-6 py-4 text-left font-semibold text-text-secondary text-xs uppercase tracking-wider">Role</th>
-                <th className="px-6 py-4 text-center font-semibold text-text-secondary text-xs uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-center font-semibold text-text-secondary text-xs uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-border">
-                    <td colSpan={4} className="px-6 py-4">
-                      <div className="h-4 bg-bg-light animate-pulse rounded" />
-                    </td>
-                  </tr>
-                ))
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="text-center py-12 text-text-muted text-sm bg-white">
-                    No users found.
-                  </td>
-                </tr>
-              ) : (
-                users.map(u => (
-                  <tr key={u.id} className="border-b border-border hover:bg-black/[0.01]">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                          {u.name?.[0]?.toUpperCase() || <UserIcon className="w-4 h-4" />}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-text-primary">{u.name}</p>
-                          <p className="text-xs text-text-muted">{u.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${getRoleBadgeColor(u.role)}`}>
-                        {u.role?.replace(/_/g, ' ') || 'Unknown'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${u.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                        {u.isActive !== false ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Link
-                          to={`/users/${u.id}/edit`}
-                          className="p-1 text-text-secondary hover:text-accent transition-colors tooltip"
-                        >
-                          <Edit className="w-4 h-4" />
-                          <span className="tooltip-content">Edit User</span>
-                        </Link>
-                        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
-                          <button
-                            onClick={() => handleDelete(u.id)}
-                            className="p-1 text-text-secondary hover:text-danger transition-colors tooltip"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="tooltip-content">Delete User</span>
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* Users Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {loading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card p-6 h-32 flex items-center justify-center">
+              <div className="h-10 w-full bg-bg-light animate-pulse rounded" />
+            </div>
+          ))
+        ) : users.length === 0 ? (
+          <div className="col-span-full card py-12 text-center text-text-muted text-sm">
+            No users found.
+          </div>
+        ) : (
+          users.map(u => (
+            <div 
+              key={u.id} 
+              className="card hover:shadow-lg transition-shadow cursor-pointer relative"
+              onClick={() => setSelectedUser(u)}
+            >
+              <div className="absolute top-4 right-4 flex items-center gap-1 z-10">
+                <Link
+                  to={`/users/${u.id}/edit`}
+                  className="p-1 text-text-secondary hover:text-accent transition-colors bg-bg-surface rounded"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <Edit className="w-4 h-4" />
+                </Link>
+                {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleDelete(u.id);
+                    }}
+                    className="p-1 text-text-secondary hover:text-danger transition-colors bg-bg-surface rounded"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-col h-full">
+                <div className="flex items-start gap-4 mb-4">
+                  <img 
+                    src={getAvatarForUser(u.name)} 
+                    alt={u.name} 
+                    className="w-12 h-12 rounded-full object-cover shrink-0 shadow-sm border-2 border-bg-light"
+                  />
+                  <div className="pr-12 min-w-0">
+                    <h3 className="font-semibold text-text-primary truncate text-base">{u.name}</h3>
+                    <p className="text-sm text-text-muted truncate">{u.email}</p>
+                  </div>
+                </div>
+
+                <div className="mt-auto flex flex-wrap gap-2 pt-2 border-t border-border">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${getRoleBadgeColor(u.role)}`}>
+                    {u.role?.replace(/_/g, ' ') || 'Unknown'}
+                  </span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${u.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {u.isActive !== false ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
+
+      {/* User Details Modal */}
+      <Modal isOpen={!!selectedUser} onClose={() => setSelectedUser(null)} title="User Information">
+        {selectedUser && (
+          <div className="p-2">
+            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border">
+              <img 
+                src={getAvatarForUser(selectedUser.name)} 
+                alt={selectedUser.name} 
+                className="w-16 h-16 rounded-full object-cover shrink-0 shadow-glow border-2 border-bg-light"
+              />
+              <div>
+                <h3 className="text-xl font-bold text-text-primary">{selectedUser.name}</h3>
+                <span className={`inline-flex items-center mt-1 px-2.5 py-0.5 rounded text-xs font-semibold ${getRoleBadgeColor(selectedUser.role)}`}>
+                  {selectedUser.role?.replace(/_/g, ' ') || 'Unknown'}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-sm">
+                <Mail className="w-5 h-5 text-text-muted" />
+                <div>
+                  <p className="text-xs text-text-muted">Email ID</p>
+                  <p className="font-medium text-text-primary">{selectedUser.email || '—'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <Phone className="w-5 h-5 text-text-muted" />
+                <div>
+                  <p className="text-xs text-text-muted">Mobile Number</p>
+                  <p className="font-medium text-text-primary">{selectedUser.phone || 'Not Provided'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <MapPin className="w-5 h-5 text-text-muted" />
+                <div>
+                  <p className="text-xs text-text-muted">Address</p>
+                  <p className="font-medium text-text-primary">{selectedUser.address || 'Not Provided'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <Shield className="w-5 h-5 text-text-muted" />
+                <div>
+                  <p className="text-xs text-text-muted">Account Status</p>
+                  <p className="font-medium text-text-primary">{selectedUser.isActive !== false ? 'Active' : 'Inactive'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <Calendar className="w-5 h-5 text-text-muted" />
+                <div>
+                  <p className="text-xs text-text-muted">Joined On</p>
+                  <p className="font-medium text-text-primary">
+                    {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('en-IN', {
+                      year: 'numeric', month: 'short', day: 'numeric'
+                    }) : '—'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-border">
+              <Link to={`/users/${selectedUser.id}/edit`} className="btn-secondary">
+                Edit User
+              </Link>
+              <button onClick={() => setSelectedUser(null)} className="btn-primary">
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </PageWrapper>
   );
 }

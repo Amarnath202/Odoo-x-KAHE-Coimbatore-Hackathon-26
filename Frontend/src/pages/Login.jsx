@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, LogIn, ShieldCheck } from 'lucide-react';
+import { LogIn, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -13,6 +13,7 @@ export default function Login() {
   const [form, setForm] = React.useState({ email: '', password: '' });
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
 
   // Redirect if already logged in
   React.useEffect(() => {
@@ -51,16 +52,17 @@ export default function Login() {
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
         <motion.div
-          className="text-center mb-8"
+          className="text-center mb-8 flex flex-col items-center"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent mb-4 shadow-glow">
-            <Zap className="w-8 h-8 text-white" />
+          <div className="bg-white/95 p-5 rounded-[2rem] shadow-2xl backdrop-blur-md inline-block border border-white/20 mb-3">
+            <img src="/logo-new.png" alt="Shiv Furniture" className="h-28 sm:h-32 w-auto object-contain mx-auto" />
           </div>
-          <h1 className="text-2xl font-bold text-white drop-shadow-md">Odoo Mini-ERP</h1>
-          <p className="text-sm text-white/80 mt-1">Shiv Furniture Works</p>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight drop-shadow-md">
+            SHIV FURNITURE <span className="text-yellow-400">ERP</span>
+          </h1>
         </motion.div>
 
         {/* Card */}
@@ -86,14 +88,24 @@ export default function Login() {
             </div>
             <div className="form-group">
               <label className="label">Password</label>
-              <input
-                type="password"
-                className="input"
-                placeholder="••••••••"
-                value={form.password}
-                onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="input pr-11"
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(p => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors p-1"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {error && (
