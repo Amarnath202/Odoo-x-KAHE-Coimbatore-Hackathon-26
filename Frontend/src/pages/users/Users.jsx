@@ -7,6 +7,7 @@ import { usersApi } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 
 import { useAuth } from '../../context/AuthContext';
+import { useConfirm } from '../../context/ConfirmContext';
 
 // Cartoonish avatar images for user cards
 const AVATAR_IMAGES = [
@@ -29,6 +30,7 @@ function getAvatarForUser(name) {
 export default function Users() {
   const { user } = useAuth();
   const toast = useToast();
+  const confirm = useConfirm();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,7 +59,8 @@ export default function Users() {
   }, [fetchUsers]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    const isConfirmed = await confirm({ message: 'Are you sure you want to delete this user?' });
+    if (!isConfirmed) return;
     try {
       await usersApi.delete(id);
       toast('User deleted successfully', 'success');

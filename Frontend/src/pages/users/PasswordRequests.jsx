@@ -3,9 +3,11 @@ import { Shield, Check, X } from 'lucide-react';
 import PageWrapper from '../../components/UI';
 import { passwordChangeApi } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 
 export default function PasswordRequests() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +31,8 @@ export default function PasswordRequests() {
   }, [fetchRequests]);
 
   const handleApprove = async (id) => {
-    if (!window.confirm('Approve this password change request?')) return;
+    const isConfirmed = await confirm({ message: 'Approve this password change request?', confirmText: 'Approve', confirmColor: 'primary' });
+    if (!isConfirmed) return;
     try {
       await passwordChangeApi.adminApprove(id);
       toast('Request approved', 'success');
@@ -41,7 +44,8 @@ export default function PasswordRequests() {
   };
 
   const handleReject = async (id) => {
-    if (!window.confirm('Reject this password change request?')) return;
+    const isConfirmed = await confirm({ message: 'Reject this password change request?', confirmText: 'Reject' });
+    if (!isConfirmed) return;
     try {
       await passwordChangeApi.adminReject(id);
       toast('Request rejected', 'success');

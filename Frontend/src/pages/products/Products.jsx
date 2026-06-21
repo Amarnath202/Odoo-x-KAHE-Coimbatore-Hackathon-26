@@ -6,6 +6,7 @@ import { formatINR } from '../../components/UI';
 import { productsApi } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
+import { useConfirm } from '../../context/ConfirmContext';
 
 // Category illustrations helper
 const getProductIcon = (name) => {
@@ -20,6 +21,7 @@ const getProductIcon = (name) => {
 export default function Products() {
   const { user } = useAuth();
   const toast = useToast();
+  const confirm = useConfirm();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,7 +56,8 @@ export default function Products() {
   }, [fetchProducts]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    const isConfirmed = await confirm({ message: 'Are you sure you want to delete this product?' });
+    if (!isConfirmed) return;
     try {
       await productsApi.delete(id);
       toast('Product deleted successfully', 'success');

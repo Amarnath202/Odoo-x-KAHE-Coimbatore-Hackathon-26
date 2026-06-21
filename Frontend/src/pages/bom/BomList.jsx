@@ -6,10 +6,12 @@ import { PageWrapper, EmptyState } from '../../components/UI';
 import { bomsApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 
 export default function BomList() {
   const toast = useToast();
   const { user } = useAuth();
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const [boms, setBoms] = useState([]);
   const [search, setSearch] = useState('');
@@ -29,7 +31,8 @@ export default function BomList() {
   useEffect(() => { const t = setTimeout(fetchBoms, 300); return () => clearTimeout(t); }, [fetchBoms]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this BoM?')) return;
+    const isConfirmed = await confirm({ message: 'Are you sure you want to delete this BoM?' });
+    if (!isConfirmed) return;
     try {
       await bomsApi.delete(id);
       toast('BoM deleted successfully', 'success');

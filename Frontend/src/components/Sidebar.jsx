@@ -7,6 +7,7 @@ import {
   LogOut, ChevronRight, Users,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../context/ConfirmContext';
 
 const ALL_NAV = [
   {
@@ -50,10 +51,12 @@ const ALL_NAV = [
 
 export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const { user, logout, hasPermission } = useAuth();
+  const confirm = useConfirm();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
+  const handleLogout = async () => {
+    const isConfirmed = await confirm({ message: 'Are you sure you want to logout?', confirmText: 'Logout', confirmColor: 'primary' });
+    if (isConfirmed) {
       logout();
       navigate('/login');
     }

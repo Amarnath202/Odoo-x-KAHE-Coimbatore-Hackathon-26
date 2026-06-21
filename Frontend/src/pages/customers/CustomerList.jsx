@@ -3,12 +3,30 @@ import { Plus, Edit, Trash2, Search, Users } from 'lucide-react';
 import { PageWrapper } from '../../components/UI';
 import Modal from '../../components/Modal';
 import { customersApi } from '../../utils/api';
+
+const AVATAR_IMAGES = [
+  '/avatars/avatar_1.png',
+  '/avatars/avatar_2.png',
+  '/avatars/avatar_3.svg',
+  '/avatars/avatar_4.svg',
+];
+
+function getAvatarForUser(name) {
+  if (!name) return AVATAR_IMAGES[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_IMAGES[Math.abs(hash) % AVATAR_IMAGES.length];
+}
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 
 export default function CustomerList() {
   const { user } = useAuth();
   const toast = useToast();
+  const confirm = useConfirm();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,7 +107,8 @@ export default function CustomerList() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this customer?')) return;
+    const isConfirmed = await confirm({ message: 'Are you sure you want to delete this customer?' });
+    if (!isConfirmed) return;
     try {
       await customersApi.delete(id);
       toast('Customer deleted', 'success');
@@ -126,62 +145,69 @@ export default function CustomerList() {
         />
       </div>
 
-      <div className="card p-0 overflow-hidden">
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr className="bg-bg-surface/50 border-b border-border">
-                <th className="px-6 py-4 text-left text-xs uppercase tracking-wider text-text-secondary font-semibold">Name</th>
-                <th className="px-6 py-4 text-left text-xs uppercase tracking-wider text-text-secondary font-semibold">Email</th>
-                <th className="px-6 py-4 text-left text-xs uppercase tracking-wider text-text-secondary font-semibold">Phone</th>
-                <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-text-secondary font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={4} className="text-center py-12 text-text-muted text-sm bg-white">
-                    Loading customers...
-                  </td>
-                </tr>
-              ) : filteredCustomers.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="text-center py-12 text-text-muted text-sm bg-white">
-                    No customers found.
-                  </td>
-                </tr>
-              ) : (
-                filteredCustomers.map(c => (
-                  <tr key={c.id} className="border-b border-border hover:bg-black/[0.01]">
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-semibold text-text-primary">{c.name}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm text-text-secondary">{c.email || '—'}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm text-text-secondary">{c.phone || '—'}</p>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => openModal(c)} className="p-1 text-text-secondary hover:text-accent transition-colors tooltip">
-                          <Edit className="w-4 h-4" />
-                          <span className="tooltip-content">Edit</span>
-                        </button>
-                        {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
-                          <button onClick={() => handleDelete(c.id)} className="p-1 text-text-secondary hover:text-danger transition-colors tooltip">
-                            <Trash2 className="w-4 h-4" />
-                            <span className="tooltip-content">Delete</span>
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {loading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card p-6 h-32 flex items-center justify-center">
+              <div className="h-10 w-full bg-bg-light animate-pulse rounded" />
+            </div>
+          ))
+        ) : filteredCustomers.length === 0 ? (
+          <div className="col-span-full card py-12 text-center text-text-muted text-sm">
+            No customers found.
+          </div>
+        ) : (
+          filteredCustomers.map(c => (
+            <div 
+              key={c.id} 
+              className="card hover:shadow-lg transition-shadow relative"
+            >
+              <div className="absolute top-4 right-4 flex items-center gap-1 z-10">
+                <button
+                  onClick={() => openModal(c)}
+                  className="p-1 text-text-secondary hover:text-accent transition-colors bg-bg-surface rounded tooltip"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span className="tooltip-content">Edit</span>
+                </button>
+                {(user?.role === 'ADMIN' || user?.role === 'BUSINESS_OWNER') && (
+                  <button
+                    onClick={() => handleDelete(c.id)}
+                    className="p-1 text-text-secondary hover:text-danger transition-colors bg-bg-surface rounded tooltip"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="tooltip-content">Delete</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-col h-full">
+                <div className="flex items-start gap-4 mb-4">
+                  <img 
+                    src={getAvatarForUser(c.name)} 
+                    alt={c.name} 
+                    className="w-12 h-12 rounded-full object-cover shrink-0 shadow-sm border-2 border-bg-light"
+                  />
+                  <div className="pr-12 min-w-0">
+                    <h3 className="font-semibold text-text-primary truncate text-base">{c.name}</h3>
+                    <p className="text-sm text-text-muted truncate">{c.email || 'No email provided'}</p>
+                  </div>
+                </div>
+
+                <div className="mt-auto flex flex-wrap gap-2 pt-2 border-t border-border">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700">
+                    CUSTOMER
+                  </span>
+                  {c.phone && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-700">
+                      {c.phone}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <Modal isOpen={isModalOpen} onClose={closeModal} title={editingCustomer ? 'Edit Customer' : 'Add Customer'}>

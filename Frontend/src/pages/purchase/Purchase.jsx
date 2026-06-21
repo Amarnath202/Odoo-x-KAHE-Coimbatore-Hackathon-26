@@ -7,6 +7,7 @@ import StatusBadge from '../../components/StatusBadge';
 import { purchaseApi } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 
 const FILTER_TABS = [
   { label: 'All',               value: '' },
@@ -25,6 +26,7 @@ function labelStatus(s) {
 export default function Purchase() {
   const { user } = useAuth();
   const toast = useToast();
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const [filter, setFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -49,7 +51,8 @@ export default function Purchase() {
   useEffect(() => { const t = setTimeout(fetchOrders, 300); return () => clearTimeout(t); }, [fetchOrders]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this purchase order?')) return;
+    const isConfirmed = await confirm({ message: 'Are you sure you want to delete this purchase order?' });
+    if (!isConfirmed) return;
     try {
       await purchaseApi.delete(id);
       toast('Purchase order deleted successfully', 'success');
