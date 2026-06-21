@@ -16,6 +16,7 @@ export const authorize = (...allowedRoles: Role[]) => {
     }
 
     if (!allowedRoles.includes(req.user.role)) {
+      console.log(`[RBAC] Forbidden: User ${req.user.email} with role ${req.user.role} tried to access ${req.method} ${req.originalUrl}. Allowed roles: ${allowedRoles.join(', ')}`);
       throw AppError.forbidden(MESSAGES.FORBIDDEN);
     }
 
