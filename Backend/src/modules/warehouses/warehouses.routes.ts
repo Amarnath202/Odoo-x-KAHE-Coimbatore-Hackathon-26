@@ -34,13 +34,13 @@ router.use(authenticate);
  */
 router.get(
   '/',
-  authorize(Role.ADMIN, Role.BUSINESS_OWNER, Role.INVENTORY_MANAGER, Role.MANUFACTURING_USER),
+  authorize(Role.ADMIN, Role.BUSINESS_OWNER, Role.INVENTORY_MANAGER, Role.MANUFACTURING_USER, Role.SALES_USER, Role.PURCHASE_USER),
   asyncHandler(warehousesController.list.bind(warehousesController)),
 );
 
 router.get(
   '/:id',
-  authorize(Role.ADMIN, Role.BUSINESS_OWNER, Role.INVENTORY_MANAGER, Role.MANUFACTURING_USER),
+  authorize(Role.ADMIN, Role.BUSINESS_OWNER, Role.INVENTORY_MANAGER, Role.MANUFACTURING_USER, Role.SALES_USER, Role.PURCHASE_USER),
   validate(idParamSchema, 'params'),
   asyncHandler(warehousesController.getById.bind(warehousesController)),
 );

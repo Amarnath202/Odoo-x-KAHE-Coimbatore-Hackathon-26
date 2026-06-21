@@ -163,6 +163,11 @@ export class InventoryService {
     const currentReserved = Number(current.reservedQty);
 
     const newOnHand = currentOnHand - quantity;
+    if (newOnHand < 0) {
+      throw AppError.unprocessable(
+        `Cannot deduct stock: Insufficient stock in warehouse. Current on hand is ${currentOnHand}, but tried to deduct ${quantity}.`
+      );
+    }
     const newReserved = Math.max(0, currentReserved - quantity);
 
     await inventoryRepository.updateQuantities(

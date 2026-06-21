@@ -12,11 +12,18 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
 function labelStatus(s) {
-  const M = { DRAFT:'Draft', CONFIRMED:'Confirmed', IN_PROGRESS:'In Progress', DONE:'Done', CANCELLED:'Cancelled' };
+  const M = { 
+    DRAFT:'Draft', 
+    WAITING_FOR_MATERIALS: 'Waiting Materials', 
+    READY_FOR_PRODUCTION: 'Ready', 
+    IN_PRODUCTION:'In Production', 
+    COMPLETED:'Completed', 
+    CANCELLED:'Cancelled' 
+  };
   return M[s] ?? s;
 }
 
-const STATUS_STEPS = ['Draft', 'Confirmed', 'In Progress', 'Done'];
+const STATUS_STEPS = ['Draft', 'Waiting Materials', 'Ready', 'In Production', 'Completed'];
 
 export default function ManufacturingDetail() {
   const { id } = useParams();
@@ -65,7 +72,7 @@ export default function ManufacturingDetail() {
   const components = order.components ?? order.bom?.components ?? [];
   const workOrders = order.workOrders ?? [];
 
-  const currentStep = { DRAFT: 0, CONFIRMED: 1, IN_PROGRESS: 2, DONE: 3, CANCELLED: -1 }[status] ?? 0;
+  const currentStep = { DRAFT: 0, WAITING_FOR_MATERIALS: 1, READY_FOR_PRODUCTION: 2, IN_PRODUCTION: 3, COMPLETED: 4, CANCELLED: -1 }[status] ?? 0;
 
   return (
     <PageWrapper>
@@ -86,17 +93,17 @@ export default function ManufacturingDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {status === 'DRAFT' && (
-            <button onClick={() => setModal('confirm')} className="btn-primary">
-              <CheckCircle className="w-4 h-4" />Confirm
+          {(status === 'DRAFT' || status === 'WAITING_FOR_MATERIALS') && (
+            <button onClick={() => setModal('check')} className="btn-primary">
+              <Package className="w-4 h-4" />Check Availability
             </button>
           )}
-          {status === 'CONFIRMED' && (
+          {status === 'READY_FOR_PRODUCTION' && (
             <button onClick={() => setModal('start')} className="btn-warning">
               <Play className="w-4 h-4" />Start Production
             </button>
           )}
-          {status === 'IN_PROGRESS' && (
+          {status === 'IN_PRODUCTION' && (
             <button onClick={() => setModal('complete')} className="btn-success">
               <Trophy className="w-4 h-4" />Complete
             </button>
@@ -131,6 +138,30 @@ export default function ManufacturingDetail() {
               ))}
             </div>
           </motion.div>
+
+          {/* Missing Materials Alert */}
+          {status === 'WAITING_FOR_MATERIALS' && order.linkedPurchaseOrders?.length > 0 && (
+            <motion.div className="p-4 rounded-xl bg-orange-50 border border-orange-200" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+              <div className="flex items-center gap-2 mb-2 text-orange-800 font-semibold">
+                <Package className="w-5 h-5" />
+                Missing Materials Detected
+              </div>
+              <p className="text-sm text-orange-700 mb-4">
+                This order is waiting for materials. The following Purchase Orders were automatically generated:
+              </p>
+              <div className="space-y-2">
+                {order.linkedPurchaseOrders.map((po) => (
+                  <div key={po.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-100">
+                    <span className="font-mono font-medium text-sm text-text-primary">{po.id.slice(0,8)}</span>
+                    <button onClick={() => navigate(`/purchase/${po.id}`)} className="text-sm text-primary hover:underline font-medium">
+                      View Purchase Order
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
 
           {/* Components */}
           {components.length > 0 && (
@@ -225,9 +256,9 @@ export default function ManufacturingDetail() {
 
       {/* Action Modals */}
       {[
-        { key: 'confirm',  title: 'Confirm Manufacturing Order', body: 'Work orders will be generated from the BoM operations.', btn: 'Confirm', btnClass: 'btn-primary', icon: CheckCircle, action: () => doAction(() => manufacturingApi.confirm(id), 'Order confirmed — work orders created', 'confirm') },
-        { key: 'start',    title: 'Start Production',             body: 'Component inventory will be reserved for this order.', btn: 'Start', btnClass: 'btn-warning', icon: Play, action: () => doAction(() => manufacturingApi.start(id), 'Production started — components reserved', 'start') },
-        { key: 'complete', title: 'Complete Manufacturing',        body: 'Components will be consumed and finished goods added to inventory.', btn: 'Complete', btnClass: 'btn-success', icon: Trophy, action: () => doAction(() => manufacturingApi.complete(id), 'Manufacturing complete — inventory updated', 'complete') },
+        { key: 'check',    title: 'Check Material Availability', body: 'This will check inventory and automatically generate Purchase Orders for missing components.', btn: 'Check Availability', btnClass: 'btn-primary', icon: Package, action: () => doAction(() => manufacturingApi.checkAvailability(id), 'Availability checked', 'check') },
+        { key: 'start',    title: 'Start Production',             body: 'Component inventory will be consumed for this order.', btn: 'Start', btnClass: 'btn-warning', icon: Play, action: () => doAction(() => manufacturingApi.start(id), 'Production started', 'start') },
+        { key: 'complete', title: 'Complete Manufacturing',        body: 'Finished goods will be added to inventory.', btn: 'Complete', btnClass: 'btn-success', icon: Trophy, action: () => doAction(() => manufacturingApi.complete(id), 'Manufacturing complete', 'complete') },
       ].map(m => (
         <AnimatePresence key={m.key}>
           {modal === m.key && (

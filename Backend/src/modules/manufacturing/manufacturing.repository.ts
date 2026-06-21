@@ -13,6 +13,7 @@ const MO_INCLUDE = {
   company: { select: { id: true, name: true } },
   warehouse: { select: { id: true, name: true } },
   workOrders: { include: { operation: true } },
+  linkedPurchaseOrders: { include: { items: true } },
 } satisfies Prisma.ManufacturingOrderInclude;
 
 export class ManufacturingRepository {

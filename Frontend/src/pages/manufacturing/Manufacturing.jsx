@@ -10,16 +10,24 @@ import { useToast } from '../../context/ToastContext';
 import { useConfirm } from '../../context/ConfirmContext';
 
 const FILTER_TABS = [
-  { label: 'All',         value: '' },
-  { label: 'Draft',       value: 'DRAFT' },
-  { label: 'Confirmed',   value: 'CONFIRMED' },
-  { label: 'In Progress', value: 'IN_PROGRESS' },
-  { label: 'Done',        value: 'DONE' },
-  { label: 'Cancelled',   value: 'CANCELLED' },
+  { label: 'All',                   value: '' },
+  { label: 'Draft',                 value: 'DRAFT' },
+  { label: 'Waiting for Materials', value: 'WAITING_FOR_MATERIALS' },
+  { label: 'Ready',                 value: 'READY_FOR_PRODUCTION' },
+  { label: 'In Production',         value: 'IN_PRODUCTION' },
+  { label: 'Completed',             value: 'COMPLETED' },
+  { label: 'Cancelled',             value: 'CANCELLED' },
 ];
 
 function labelStatus(s) {
-  const M = { DRAFT:'Draft', CONFIRMED:'Confirmed', IN_PROGRESS:'In Progress', DONE:'Done', CANCELLED:'Cancelled' };
+  const M = { 
+    DRAFT:'Draft', 
+    WAITING_FOR_MATERIALS: 'Waiting Materials', 
+    READY_FOR_PRODUCTION: 'Ready', 
+    IN_PRODUCTION:'In Production', 
+    COMPLETED:'Completed', 
+    CANCELLED:'Cancelled' 
+  };
   return M[s] ?? s;
 }
 
@@ -61,9 +69,10 @@ export default function Manufacturing() {
 
   const kpi = {
     total: orders.length,
-    inProgress: orders.filter(o => o.status === 'IN_PROGRESS').length,
-    done: orders.filter(o => o.status === 'DONE').length,
-    confirmed: orders.filter(o => o.status === 'CONFIRMED').length,
+    waiting: orders.filter(o => o.status === 'WAITING_FOR_MATERIALS').length,
+    ready: orders.filter(o => o.status === 'READY_FOR_PRODUCTION').length,
+    inProduction: orders.filter(o => o.status === 'IN_PRODUCTION').length,
+    completed: orders.filter(o => o.status === 'COMPLETED').length,
   };
 
   return (
@@ -81,9 +90,10 @@ export default function Manufacturing() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
           { label: 'Total Orders', value: kpi.total,      icon: Wrench,       iconCls: 'bg-primary/10 text-primary' },
-          { label: 'Confirmed',    value: kpi.confirmed,  icon: CheckCircle,  iconCls: 'bg-accent/10 text-accent' },
-          { label: 'In Progress',  value: kpi.inProgress, icon: Clock,        iconCls: 'bg-amber-100 text-amber-600' },
-          { label: 'Completed',    value: kpi.done,       icon: TrendingUp,   iconCls: 'bg-green-100 text-green-600' },
+          { label: 'Waiting Mat.', value: kpi.waiting,    icon: Package,      iconCls: 'bg-orange-100 text-orange-600' },
+          { label: 'Ready',        value: kpi.ready,      icon: CheckCircle,  iconCls: 'bg-accent/10 text-accent' },
+          { label: 'In Production',value: kpi.inProduction,icon: Clock,       iconCls: 'bg-amber-100 text-amber-600' },
+          { label: 'Completed',    value: kpi.completed,  icon: TrendingUp,   iconCls: 'bg-green-100 text-green-600' },
         ].map((k, i) => (
           <motion.div key={k.label} className="mini-kpi"
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>

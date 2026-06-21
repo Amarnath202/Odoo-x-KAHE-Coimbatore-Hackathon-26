@@ -5,25 +5,28 @@
 
 describe('Manufacturing Order Integration — State Machine', () => {
   describe('Order state transitions', () => {
-    it('DRAFT → CONFIRMED is valid', () => {
+    it('DRAFT → WAITING_FOR_MATERIALS is valid', () => {
       const validTransitions: Record<string, string[]> = {
-        DRAFT: ['CONFIRMED'],
-        CONFIRMED: ['IN_PROGRESS'],
-        IN_PROGRESS: ['DONE'],
-        DONE: [],
+        DRAFT: ['WAITING_FOR_MATERIALS', 'READY_FOR_PRODUCTION'],
+        WAITING_FOR_MATERIALS: ['READY_FOR_PRODUCTION'],
+        READY_FOR_PRODUCTION: ['IN_PRODUCTION'],
+        IN_PRODUCTION: ['COMPLETED'],
+        COMPLETED: [],
         CANCELLED: [],
       };
-      expect(validTransitions['DRAFT']).toContain('CONFIRMED');
+      expect(validTransitions['DRAFT']).toContain('WAITING_FOR_MATERIALS');
     });
 
-    it('DONE → IN_PROGRESS is invalid (cannot go backwards)', () => {
+    it('COMPLETED → IN_PRODUCTION is invalid (cannot go backwards)', () => {
       const validTransitions: Record<string, string[]> = {
-        DRAFT: ['CONFIRMED'],
-        CONFIRMED: ['IN_PROGRESS'],
-        IN_PROGRESS: ['DONE'],
-        DONE: [],
+        DRAFT: ['WAITING_FOR_MATERIALS', 'READY_FOR_PRODUCTION'],
+        WAITING_FOR_MATERIALS: ['READY_FOR_PRODUCTION'],
+        READY_FOR_PRODUCTION: ['IN_PRODUCTION'],
+        IN_PRODUCTION: ['COMPLETED'],
+        COMPLETED: [],
+        CANCELLED: [],
       };
-      expect(validTransitions['DONE']).not.toContain('IN_PROGRESS');
+      expect(validTransitions['COMPLETED']).not.toContain('IN_PRODUCTION');
     });
   });
 

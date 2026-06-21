@@ -250,6 +250,7 @@ export const manufacturingApi = {
   getById: (id) => api.get(`/manufacturing-orders/${id}`),
   create: (body) => api.post('/manufacturing-orders', body),
   confirm: (id) => api.post(`/manufacturing-orders/${id}/confirm`, {}),
+  checkAvailability: (id) => api.post(`/manufacturing-orders/${id}/check-availability`, {}),
   start: (id) => api.post(`/manufacturing-orders/${id}/start`, {}),
   complete: (id) => api.post(`/manufacturing-orders/${id}/complete`, {}),
   delete: (id) => api.delete(`/manufacturing-orders/${id}`),

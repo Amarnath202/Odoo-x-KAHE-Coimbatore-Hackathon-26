@@ -2,6 +2,7 @@ import { PurchaseStatus, LedgerMovementType } from '@prisma/client';
 import prisma from '../../config/database';
 import { purchaseRepository } from './purchase.repository';
 import { inventoryService } from '../inventory/inventory.service';
+import { manufacturingService } from '../manufacturing/manufacturing.service';
 import { AppError } from '../../common/utils/AppError';
 import { MESSAGES } from '../../common/constants/messages';
 import {
@@ -169,6 +170,15 @@ export class PurchaseService {
         },
       });
     });
+
+    // If this PO is linked to a Manufacturing Order, trigger availability check
+    if (order.manufacturingOrderId) {
+      try {
+        await manufacturingService.checkAvailability(order.manufacturingOrderId, userId, companyId);
+      } catch (e) {
+        console.error('Failed to trigger MO availability check after PO receipt:', e);
+      }
+    }
 
     return purchaseRepository.findOrderById(orderId);
   }

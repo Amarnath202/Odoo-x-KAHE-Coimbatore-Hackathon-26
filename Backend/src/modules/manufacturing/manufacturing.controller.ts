@@ -21,6 +21,15 @@ export class ManufacturingController {
     sendCreated(res, order, 'Manufacturing order created');
   }
 
+  async checkAvailability(req: Request, res: Response): Promise<void> {
+    const order = await manufacturingService.checkAvailability(
+      req.params['id']!,
+      req.user!.id,
+      req.user!.companyId,
+    );
+    sendSuccess(res, order, 'Availability checked successfully');
+  }
+
   async confirm(req: Request, res: Response): Promise<void> {
     const order = await manufacturingService.confirmOrder(
       req.params['id']!,
